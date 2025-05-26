@@ -1,5 +1,4 @@
 import React from 'react'
-import { motion } from 'framer-motion'
 import { ChevronRight, Home } from 'lucide-react'
 import { useStore } from '../store/useStore'
 
@@ -43,7 +42,6 @@ export const BreadcrumbNav: React.FC = () => {
     breadcrumbs.push({
       id: activeProject.id,
       name: activeProject.name,
-      icon: activeProject.icon,
       onClick: () => {
         setActiveProject(activeProject.id)
         setActiveFolder(null)
@@ -87,24 +85,19 @@ export const BreadcrumbNav: React.FC = () => {
   if (breadcrumbs.length === 0) return null
 
   return (
-    <div className="flex items-center gap-1 px-4 py-2.5 bg-gradient-to-r from-apple-secondary/30 to-transparent 
-                    border-b border-apple-border/50 backdrop-blur-sm
-                    overflow-x-auto scrollbar-hide">
+    <div className="flex items-center gap-2 px-6 py-3 bg-white border-b border-[#D2D2D7] overflow-x-auto">
       {breadcrumbs.map((crumb, index) => (
-        <motion.div
+        <div
           key={crumb.id}
-          initial={{ opacity: 0, x: -10 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ delay: index * 0.05 }}
-          className="flex items-center gap-1"
+          className="flex items-center gap-2"
         >
           <button
             onClick={crumb.onClick}
-            className={`flex items-center gap-1.5 px-2 py-1 rounded-md text-sm
-                     transition-colors hover:bg-apple-secondary ${
+            className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-[15px]
+                     transition-all duration-200 hover:bg-[#F5F5F7] active:scale-[0.98] ${
                        index === breadcrumbs.length - 1
-                         ? 'text-apple-text font-medium'
-                         : 'text-apple-text-secondary hover:text-apple-text'
+                         ? 'text-[#1D1D1F] font-medium'
+                         : 'text-[#86868B] hover:text-[#1D1D1F]'
                      }`}
           >
             {crumb.icon && (
@@ -114,9 +107,9 @@ export const BreadcrumbNav: React.FC = () => {
           </button>
           
           {index < breadcrumbs.length - 1 && (
-            <ChevronRight className="w-4 h-4 text-apple-text-secondary flex-shrink-0" />
+            <ChevronRight className="w-4 h-4 flex-shrink-0 text-[#86868B]" />
           )}
-        </motion.div>
+        </div>
       ))}
     </div>
   )

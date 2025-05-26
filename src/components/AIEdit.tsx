@@ -98,6 +98,11 @@ export const AIEdit: React.FC<AIEditProps> = ({ content, onRewrite }) => {
           setRecentPrompts(updated)
           localStorage.setItem('recentCustomPrompts', JSON.stringify(updated))
         }
+        
+        // For markdown conversion, show a success message
+        if (transformation === 'markdown') {
+          console.log('✅ Markdown conversion completed. Content should now display with proper formatting.')
+        }
       } else {
         alert(`Error: ${result.error || 'Unknown error occurred'}`)
       }
@@ -143,9 +148,9 @@ export const AIEdit: React.FC<AIEditProps> = ({ content, onRewrite }) => {
         onClick={() => setIsOpen(!isOpen)}
         disabled={isLoading}
         className={`
-          flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-all
+          flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-all duration-200 ease-out
           ${isApiKeyConfigured 
-            ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white hover:from-purple-600 hover:to-pink-600 shadow-sm' 
+            ? 'bg-[#F5F5F7] text-[#1D1D1F] border border-[#D2D2D7] hover:bg-[#E8E8ED] hover:border-[#C7C7CC] active:scale-[0.97] active:bg-[#E8E8ED]' 
             : 'bg-gray-100 text-gray-400 cursor-not-allowed'
           }
           ${isLoading ? 'opacity-50 cursor-wait' : ''}
@@ -153,14 +158,14 @@ export const AIEdit: React.FC<AIEditProps> = ({ content, onRewrite }) => {
       >
         {isLoading ? (
           <>
-            <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+            <div className="w-4 h-4 border-2 border-[#1e3a8a] border-t-transparent rounded-full animate-spin"></div>
             <span>Transforming...</span>
           </>
         ) : (
           <>
-            <Sparkles className="w-4 h-4" />
+            <Sparkles className="w-4 h-4 text-[#1D1D1F]" />
             <span>AI Edit</span>
-            <ChevronDown className="w-3 h-3" />
+            <ChevronDown className="w-3 h-3 text-[#1D1D1F]" />
           </>
         )}
       </button>
@@ -176,7 +181,7 @@ export const AIEdit: React.FC<AIEditProps> = ({ content, onRewrite }) => {
                   onClick={() => setActiveCategory(category.key)}
                   className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
                     activeCategory === category.key
-                      ? 'bg-purple-100 text-purple-700'
+                      ? 'bg-blue-100 text-blue-700'
                       : 'text-gray-600 hover:bg-gray-100'
                   }`}
                 >
@@ -202,7 +207,7 @@ export const AIEdit: React.FC<AIEditProps> = ({ content, onRewrite }) => {
                       }
                     }}
                     placeholder="Type your instruction..."
-                    className="w-full px-4 py-3 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                    className="w-full px-4 py-3 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     autoFocus
                   />
                   
@@ -229,7 +234,7 @@ export const AIEdit: React.FC<AIEditProps> = ({ content, onRewrite }) => {
                   <button
                     onClick={() => handleTransform('custom', customPrompt)}
                     disabled={!customPrompt.trim()}
-                    className="w-full px-4 py-3 bg-purple-500 text-white text-sm font-medium rounded-lg hover:bg-purple-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                    className="w-full px-4 py-3 bg-blue-500 text-white text-sm font-medium rounded-lg hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                   >
                     Apply Custom Prompt
                   </button>

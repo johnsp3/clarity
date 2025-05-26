@@ -83,7 +83,7 @@ export const signInWithGoogle = async () => {
     
     if (userEmail !== authorizedEmail) {
       await signOut(auth);
-      throw new Error(`Unauthorized email. Only ${authorizedEmail} can access this app.`);
+      throw new Error('Sign in failed.');
     }
     
     return result.user;

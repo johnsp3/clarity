@@ -3,7 +3,7 @@ import {
   Bold, Italic, Code, Quote,
   List, Link2,
   FileText, FileDown, Eye, EyeOff,
-  Save, MoreVertical, Heading1, Heading2,
+  Save, Heading1, Heading2,
   Printer
 } from 'lucide-react'
 
@@ -38,6 +38,7 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({ note, onUpdate }
   const [showPrintPreview, setShowPrintPreview] = useState(false)
   const [wordCount, setWordCount] = useState(0)
   const [charCount, setCharCount] = useState(0)
+  const [aiDetectionConfidence, setAiDetectionConfidence] = useState<'high' | 'medium' | 'low'>('medium')
   const previewContentRef = useRef<string>('')
 
   // Initialize Tiptap editor
@@ -76,19 +77,49 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({ note, onUpdate }
     }
   }, [note.id, note.title, note.content, editor, content])
 
-  // Detect content format
+  // AI-powered format detection
   useEffect(() => {
-    const format = detectContentFormat(content)
-    setDetectedFormat(format)
-    
-    // Calculate stats using editor text content
-    if (editor) {
-      const plainText = editor.getText()
-      const words = plainText.trim().split(/\s+/).filter(word => word.length > 0).length
-      const chars = plainText.length
-      setWordCount(words)
-      setCharCount(chars)
+    if (!content || !content.trim()) {
+      setDetectedFormat('plain')
+      return
     }
+    
+    // Use local format detection on the raw content (preserves markdown syntax)
+    const detectFormat = () => {
+      try {
+        console.log('🔍 Local format detection for content:', content)
+        
+        const format = detectContentFormat(content)
+        console.log('📝 Local detection result:', format)
+        
+        setDetectedFormat(format)
+        setAiDetectionConfidence('medium')
+        
+        // Show format badge when format changes (especially for markdown)
+        if (format === 'markdown') {
+          setShowFormatBadge(true)
+          setTimeout(() => {
+            setShowFormatBadge(false)
+          }, 4000)
+        }
+      } catch (error) {
+        console.error('❌ Local format detection failed:', error)
+        setDetectedFormat('plain')
+        setAiDetectionConfidence('low')
+      }
+    }
+    
+    // Debounce the format detection
+    const timeoutId = setTimeout(detectFormat, 300)
+    
+    // Calculate stats using the raw content for accurate word count
+    const plainTextForStats = editor ? editor.getText() : content.replace(/<[^>]*>/g, '')
+    const words = plainTextForStats.trim().split(/\s+/).filter(word => word.length > 0).length
+    const chars = plainTextForStats.length
+    setWordCount(words)
+    setCharCount(chars)
+    
+    return () => clearTimeout(timeoutId)
   }, [content, editor])
 
   const handleTitleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -198,7 +229,7 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({ note, onUpdate }
   const getFormatDisplayName = (format: ContentFormat): string => {
     switch (format) {
       case 'markdown':
-        return 'Markdown'
+        return 'Markdown Format'
       case 'html':
         return 'HTML'
       case 'code':
@@ -348,9 +379,16 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({ note, onUpdate }
 
             <div className="w-px h-6 bg-gray-200 mx-1" />
 
-            {/* Format Info */}
-            <div className="px-3 py-1 rounded bg-gray-50 text-sm text-gray-600">
-              Format: <span className="font-medium">{getFormatDisplayName(detectedFormat)}</span>
+            {/* Format Info with Detection Status */}
+            <div className="px-3 py-1 rounded bg-gray-50 text-sm text-gray-600 flex items-center gap-2">
+              <span>Format: <span className="font-medium">{getFormatDisplayName(detectedFormat)}</span></span>
+              <div className="flex items-center gap-1">
+                <div className={`w-2 h-2 rounded-full ${
+                  aiDetectionConfidence === 'high' ? 'bg-green-500' : 
+                  aiDetectionConfidence === 'medium' ? 'bg-yellow-500' : 'bg-gray-400'
+                }`}></div>
+                <span className="text-xs text-gray-500">Local</span>
+              </div>
             </div>
           </div>
 
@@ -445,37 +483,6 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({ note, onUpdate }
                 }
               }}
             />
-
-            {/* More Options */}
-            <DropdownMenu.Root>
-              <DropdownMenu.Trigger asChild>
-                <button className="p-2 rounded hover:bg-gray-100 transition-colors text-gray-600">
-                  <MoreVertical size={16} />
-                </button>
-              </DropdownMenu.Trigger>
-              <DropdownMenu.Portal>
-                <DropdownMenu.Content
-                  className="min-w-[160px] bg-white rounded-md shadow-md p-1 z-50 border border-gray-200"
-                  sideOffset={5}
-                >
-                  <DropdownMenu.Item 
-                    className="flex items-center gap-2 px-3 py-1.5 text-sm rounded hover:bg-gray-50 cursor-pointer"
-                  >
-                    Word count: {stats.words}
-                  </DropdownMenu.Item>
-                  <DropdownMenu.Item 
-                    className="flex items-center gap-2 px-3 py-1.5 text-sm rounded hover:bg-gray-50 cursor-pointer"
-                  >
-                    Characters: {stats.characters}
-                  </DropdownMenu.Item>
-                  <DropdownMenu.Item 
-                    className="flex items-center gap-2 px-3 py-1.5 text-sm rounded hover:bg-gray-50 cursor-pointer"
-                  >
-                    Reading time: {stats.readingTime} min
-                  </DropdownMenu.Item>
-                </DropdownMenu.Content>
-              </DropdownMenu.Portal>
-            </DropdownMenu.Root>
           </div>
         </div>
 

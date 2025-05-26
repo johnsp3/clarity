@@ -24,14 +24,14 @@ export const formatColors: Record<ContentFormat, { gradient: string; icon: strin
   markdown: { gradient: 'from-[#0071E3] to-[#0077ED]', icon: '📝' },
   html: { gradient: 'from-[#FF6B35] to-[#FF8F65]', icon: '🔧' },
   plain: { gradient: 'from-[#86868B] to-[#86868B]', icon: '📄' },
-  rich: { gradient: 'from-[#8B5CF6] to-[#A78BFA]', icon: '✨' },
+  rich: { gradient: 'from-[#007AFF] to-[#0056CC]', icon: '✨' },
   code: { gradient: 'from-[#10B981] to-[#34D399]', icon: '💻' },
   docx: { gradient: 'from-[#2B579A] to-[#185ABD]', icon: '📘' },
   rtf: { gradient: 'from-[#D97706] to-[#F59E0B]', icon: '📋' },
   word: { gradient: 'from-[#2B579A] to-[#185ABD]', icon: '📄' },
   json: { gradient: 'from-[#059669] to-[#10B981]', icon: '🔗' },
   xml: { gradient: 'from-[#DC2626] to-[#EF4444]', icon: '📊' },
-  csv: { gradient: 'from-[#7C3AED] to-[#8B5CF6]', icon: '📈' }
+  csv: { gradient: 'from-[#007AFF] to-[#0056CC]', icon: '📈' }
 }
 
 export type NoteType = 'markdown' | 'richtext'
@@ -65,7 +65,7 @@ export interface ProjectColor {
 
 export const projectColors: ProjectColor[] = [
   { gradient: 'from-blue-400 to-blue-600', name: 'Blue' },
-  { gradient: 'from-purple-400 to-purple-600', name: 'Purple' },
+  { gradient: 'from-blue-500 to-blue-700', name: 'Blue Variant' },
   { gradient: 'from-pink-400 to-pink-600', name: 'Pink' },
   { gradient: 'from-emerald-400 to-emerald-600', name: 'Green' },
   { gradient: 'from-orange-400 to-orange-600', name: 'Orange' },

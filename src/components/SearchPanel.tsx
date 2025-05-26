@@ -115,7 +115,7 @@ export const SearchPanel: React.FC<SearchPanelProps> = ({ isOpen, onClose, onIns
 
   const searchContexts = [
     { key: 'general' as const, label: 'General', icon: Globe, color: 'text-blue-600' },
-    { key: 'research' as const, label: 'Research', icon: BookOpen, color: 'text-purple-600' },
+    { key: 'research' as const, label: 'Research', icon: BookOpen, color: 'text-blue-600' },
     { key: 'news' as const, label: 'News', icon: Newspaper, color: 'text-green-600' },
     { key: 'technical' as const, label: 'Technical', icon: Code2, color: 'text-orange-600' },
   ]
@@ -131,54 +131,58 @@ export const SearchPanel: React.FC<SearchPanelProps> = ({ isOpen, onClose, onIns
 
   return (
     <div className={`
-      fixed right-0 top-0 h-full w-[450px] bg-white shadow-2xl transform transition-transform duration-300 z-50 border-l border-gray-200
+      fixed right-0 top-0 h-full w-[450px] bg-white transform transition-transform duration-300 z-apple-overlay border-l border-[#E5E5E5]
       ${isOpen ? 'translate-x-0' : 'translate-x-full'}
-    `}>
+    `}
+    style={{ boxShadow: '0 20px 25px rgba(0, 0, 0, 0.1)' }}>
       <div className="flex flex-col h-full">
         {/* Header */}
-        <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between bg-gradient-to-r from-blue-50 to-cyan-50">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-lg shadow-sm">
+        <div className="px-6 py-6 border-b border-[#E5E5E5] flex items-center justify-between bg-white">
+          <div className="flex items-center gap-4">
+            <div className="p-3 bg-[#007AFF] rounded-lg">
               <Search className="w-5 h-5 text-white" />
             </div>
             <div>
-              <h2 className="text-lg font-semibold text-gray-900">AI Web Search</h2>
-              <p className="text-xs text-gray-500">Powered by Perplexity</p>
+              <h2 className="text-apple-title-sm">AI Assistant</h2>
+              <p className="text-apple-caption">Powered by Perplexity</p>
             </div>
           </div>
           <div className="flex items-center gap-2">
             {messages.length > 0 && (
               <button
                 onClick={clearMessages}
-                className="p-1.5 hover:bg-gray-100 rounded-lg transition-colors"
+                className="btn-apple-icon"
                 title="Clear conversation"
               >
-                <RotateCcw className="w-4 h-4 text-gray-500" />
+                <RotateCcw className="w-4 h-4" style={{ color: 'rgba(0, 0, 0, 0.6)' }} />
               </button>
             )}
             <button
               onClick={onClose}
-              className="p-1.5 hover:bg-gray-100 rounded-lg transition-colors"
+              className="btn-apple-icon"
             >
-              <X className="w-5 h-5 text-gray-500" />
+              <X className="w-5 h-5" style={{ color: 'rgba(0, 0, 0, 0.6)' }} />
             </button>
           </div>
         </div>
 
         {/* Search Context Selector */}
-        <div className="px-6 py-3 border-b border-gray-100 bg-gray-50">
-          <div className="flex gap-1">
+        <div className="px-6 py-4 border-b border-[#E5E5E5] bg-[#F5F5F7]">
+          <div className="flex gap-2">
             {searchContexts.map((context) => (
               <button
                 key={context.key}
                 onClick={() => setSearchContext(context.key)}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+                className={`flex items-center gap-2 px-3 py-2 rounded-lg text-[13px] font-medium transition-all duration-150 active:scale-[0.98] ${
                   searchContext === context.key
-                    ? 'bg-white text-gray-900 shadow-sm border border-gray-200'
-                    : 'text-gray-600 hover:bg-white hover:text-gray-900'
+                    ? 'bg-white text-black shadow-sm'
+                    : 'hover:bg-white hover:bg-opacity-50'
                 }`}
+                style={{ 
+                  color: searchContext === context.key ? '#000000' : 'rgba(0, 0, 0, 0.6)'
+                }}
               >
-                <context.icon className={`w-3.5 h-3.5 ${context.color}`} />
+                <context.icon className={`w-4 h-4 ${context.color}`} />
                 {context.label}
               </button>
             ))}

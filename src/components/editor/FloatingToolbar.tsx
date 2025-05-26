@@ -71,7 +71,7 @@ const ToolbarButton: React.FC<ToolbarButtonProps> = ({
       className={clsx(
         'relative p-2.5 rounded-xl transition-all duration-300 group',
         isActive
-          ? 'bg-gradient-to-r from-indigo-500 to-purple-500 text-white shadow-lg'
+          ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-lg'
           : 'hover:bg-white/60 text-gray-700 hover:shadow-md'
       )}
       title={tooltip}
@@ -218,7 +218,7 @@ export const FloatingToolbar: React.FC<FloatingToolbarProps> = ({ editor }) => {
       onMouseDown={(e) => e.preventDefault()} // Prevent editor from losing focus
     >
       {/* Gradient border effect */}
-      <div className="absolute -inset-0.5 bg-gradient-to-r from-pink-500 to-purple-500 
+      <div className="absolute -inset-0.5 bg-gradient-to-r from-blue-500 to-blue-600 
                     rounded-2xl opacity-20 blur-sm -z-10" />
       
       <div className="flex items-center gap-1">
@@ -446,7 +446,7 @@ export const FloatingToolbar: React.FC<FloatingToolbarProps> = ({ editor }) => {
                 />
                 {/* Preset colors */}
                 <div className="flex gap-1 mt-3">
-                  {['#000000', '#EF4444', '#F59E0B', '#10B981', '#3B82F6', '#8B5CF6', '#EC4899', '#6B7280'].map((color) => (
+                  {['#000000', '#EF4444', '#F59E0B', '#10B981', '#3B82F6', '#007AFF', '#EC4899', '#6B7280'].map((color) => (
                     <motion.button
                       key={color}
                       whileHover={{ scale: 1.2 }}

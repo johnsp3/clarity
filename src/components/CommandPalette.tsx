@@ -223,7 +223,7 @@ export const CommandPalette: React.FC = () => {
       <>
         {parts.map((part, i) => 
           part.toLowerCase() === query.toLowerCase() ? (
-            <mark key={i} className="bg-[#E5F0FF] text-[#0F62FE] font-medium px-0">
+            <mark key={i} className="bg-[rgba(0,122,255,0.2)] text-[#007AFF] font-medium px-0">
               {part}
             </mark>
           ) : (
@@ -248,29 +248,29 @@ export const CommandPalette: React.FC = () => {
           <button
             key={`note-${note.id}`}
             onClick={() => handleResultClick(result)}
-            className={`w-full px-4 py-3 hover:bg-[#F5F5F5] cursor-pointer border-l-2 
-                      transition-all duration-150 text-left flex items-center gap-3 ${
+            className={`w-full px-6 py-4 hover:bg-[#F5F5F7] cursor-pointer border-l-2 
+                      transition-all duration-150 text-left flex items-center gap-4 active:scale-[0.98] ${
                         isSelected 
-                          ? 'bg-[#F5F5F5] border-[#0F62FE]' 
+                          ? 'bg-[#F5F5F7] border-[#007AFF]' 
                           : 'border-transparent'
                       }`}
           >
-            <div className="text-[#6B6B6B]">
-              <FileText size={18} strokeWidth={1.5} />
+            <div style={{ color: 'rgba(0, 0, 0, 0.6)' }}>
+              <FileText size={20} strokeWidth={1.5} />
             </div>
             
             <div className="flex-1 min-w-0">
-              <div className="font-medium text-[#1A1A1A] truncate">
+              <div className="font-medium text-black truncate text-[15px]">
                 {highlightMatch(note.title || 'Untitled', query)}
               </div>
               {query && (
-                <div className="text-sm text-[#6B6B6B] truncate">
+                <div className="text-apple-caption truncate mt-1">
                   {highlightMatch(note.content.substring(0, 100), query)}...
                 </div>
               )}
             </div>
             
-            <div className="text-xs text-[#9B9B9B]">
+            <div className="text-apple-caption">
               {formatDate(note.updatedAt)}
             </div>
           </button>
@@ -364,20 +364,19 @@ export const CommandPalette: React.FC = () => {
                 transition={{ duration: 0.2 }}
                 className="fixed inset-0 z-50 flex items-start justify-center pt-[10vh]"
               >
-                <div className="relative w-[600px] max-h-[60vh] bg-white rounded-lg shadow-2xl 
-                              border border-[#E5E5E7] overflow-hidden">
+                <div className="relative w-[600px] max-h-[60vh] bg-white rounded-lg border border-[#E5E5E5] overflow-hidden animate-apple-scale-in"
+                     style={{ boxShadow: '0 20px 25px rgba(0, 0, 0, 0.1)' }}>
                   {/* Search Input */}
-                  <div className="border-b border-[#E5E5E7] p-4">
-                    <div className="flex items-center gap-3">
-                      <Search size={20} strokeWidth={1.5} className="text-[#6B6B6B]" />
+                  <div className="border-b border-[#E5E5E5] p-6">
+                    <div className="flex items-center gap-4">
+                      <Search size={22} strokeWidth={1.5} style={{ color: 'rgba(0, 0, 0, 0.6)' }} />
                       <input
                         ref={inputRef}
                         type="text"
                         value={query}
                         onChange={(e) => setQuery(e.target.value)}
                         placeholder="Search notes, content, or type a command..."
-                        className="w-full text-lg bg-transparent outline-none placeholder-[#9B9B9B]
-                                 text-[#1A1A1A]"
+                        className="w-full text-[18px] bg-transparent outline-none text-black placeholder-[rgba(0,0,0,0.4)]"
                         autoFocus
                       />
                     </div>
@@ -386,7 +385,7 @@ export const CommandPalette: React.FC = () => {
                   {/* Results */}
                   <div className="overflow-y-auto max-h-[calc(60vh-80px)]">
                     {totalResults === 0 && query.trim() && (
-                      <div className="py-12 text-center text-[#6B6B6B]">
+                      <div className="py-12 text-center text-apple-body-secondary">
                         No results found for "{query}"
                       </div>
                     )}
@@ -394,8 +393,7 @@ export const CommandPalette: React.FC = () => {
                     {/* Recent Notes */}
                     {searchResults.recent.length > 0 && (
                       <>
-                        <div className="px-4 py-2 text-xs font-medium text-[#6B6B6B] uppercase 
-                                      tracking-wider bg-[#FAFAFA]">
+                        <div className="px-6 py-3 text-apple-footnote bg-[#F5F5F7]">
                           Recent
                         </div>
                         {searchResults.recent.map((result, index) => 
@@ -446,9 +444,9 @@ export const CommandPalette: React.FC = () => {
 
                   {/* Footer with keyboard hints */}
                   {totalResults > 0 && (
-                    <div className="border-t border-[#E5E5E7] px-4 py-2 flex items-center 
-                                  justify-between text-xs text-[#9B9B9B]">
-                      <div className="flex items-center gap-4">
+                    <div className="border-t border-[#E5E5E5] px-6 py-3 flex items-center 
+                                  justify-between text-apple-caption">
+                      <div className="flex items-center gap-6">
                         <span>↑↓ Navigate</span>
                         <span>↵ Select</span>
                         <span>esc Close</span>

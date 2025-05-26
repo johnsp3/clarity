@@ -10,17 +10,25 @@ import { encryptData, decryptData } from '../services/encryption'
 import { signOutUser, auth } from '../services/firebase.js'
 
 interface SettingsPanelProps {
+  isOpen?: boolean
+  onOpenChange?: (open: boolean) => void
   userEmail: string
   onSignOut: () => void
   onResetApp: () => void
 }
 
 export const SettingsPanel: React.FC<SettingsPanelProps> = ({ 
+  isOpen: externalIsOpen,
+  onOpenChange: externalOnOpenChange,
   userEmail, 
   onSignOut, 
   onResetApp 
 }) => {
-  const [isOpen, setIsOpen] = useState(false)
+  const [internalIsOpen, setInternalIsOpen] = useState(false)
+  
+  // Use external state if provided, otherwise use internal state
+  const isOpen = externalIsOpen !== undefined ? externalIsOpen : internalIsOpen
+  const setIsOpen = externalOnOpenChange || setInternalIsOpen
   const [activeTab, setActiveTab] = useState<'account' | 'api' | 'data' | 'about'>('account')
   const [isSigningOut, setIsSigningOut] = useState(false)
   const [showChatGPTApiKey, setShowChatGPTApiKey] = useState(false)
@@ -167,35 +175,45 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
     { id: 'about' as const, label: 'About', icon: Info },
   ]
 
+  // If used as a standalone component, render the trigger button
+  if (externalIsOpen === undefined) {
+    return (
+      <Dialog.Root open={isOpen} onOpenChange={setIsOpen}>
+        <Dialog.Trigger asChild>
+          <button className="btn-secondary w-full">
+            <Settings size={14} />
+            Settings
+          </button>
+        </Dialog.Trigger>
+        {/* Modal content would go here for standalone use */}
+      </Dialog.Root>
+    )
+  }
+
+  // If controlled externally, just render the modal
   return (
     <Dialog.Root open={isOpen} onOpenChange={setIsOpen}>
-      <Dialog.Trigger asChild>
-        <button className="btn-secondary w-full">
-          <Settings size={14} />
-          Settings
-        </button>
-      </Dialog.Trigger>
 
       <Dialog.Portal>
-        <Dialog.Overlay className="fixed inset-0 bg-black/50 z-50" />
+        <Dialog.Overlay className="fixed inset-0 bg-black/50 z-[100]" />
         <Dialog.Content className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2
-                                 w-full max-w-2xl max-h-[90vh] bg-white rounded-lg shadow-xl z-50
+                                 w-full max-w-2xl max-h-[90vh] bg-white rounded-lg shadow-xl z-[101]
                                  overflow-hidden">
           {/* Header */}
-          <div className="flex items-center justify-between p-6 border-b border-[#E5E5E7]">
-            <Dialog.Title className="text-lg font-semibold text-gray-900">
+          <div className="flex items-center justify-between p-6 border-b border-[#D2D2D7]">
+            <Dialog.Title className="text-apple-title-sm">
               Settings
             </Dialog.Title>
             <Dialog.Close asChild>
-              <button className="p-2 hover:bg-gray-100 rounded-lg transition-colors duration-150">
-                <X size={16} className="text-gray-500" />
+              <button className="p-2 hover:bg-[#F5F5F7] rounded-lg transition-colors duration-200">
+                <X size={16} className="text-[#86868B]" />
               </button>
             </Dialog.Close>
           </div>
 
           <div className="flex h-[500px]">
             {/* Sidebar */}
-            <div className="w-48 bg-[#FAFAFA] border-r border-[#E5E5E7] p-4">
+            <div className="w-48 bg-[#F5F5F7] border-r border-[#D2D2D7] p-4">
               <nav className="space-y-1">
                 {tabs.map((tab) => {
                   const Icon = tab.icon
@@ -236,7 +254,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
                               onError={() => setImageError(true)}
                             />
                           ) : (
-                            <div className="w-full h-full bg-gradient-to-br from-blue-500 to-purple-600 
+                            <div className="w-full h-full bg-gradient-to-br from-blue-500 to-blue-600 
                                           flex items-center justify-center">
                               <User size={20} className="text-white" />
                             </div>
@@ -392,8 +410,8 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
                             <button
                               onClick={handleUpdatePerplexityApiKey}
                               disabled={!newPerplexityApiKey.trim() || isUpdatingPerplexityApiKey}
-                              className="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white 
-                                       rounded-lg hover:bg-purple-700 transition-colors duration-150
+                              className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white 
+                                       rounded-lg hover:bg-blue-700 transition-colors duration-150
                                        disabled:opacity-50 disabled:cursor-not-allowed"
                             >
                               {isUpdatingPerplexityApiKey ? (

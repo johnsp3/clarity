@@ -94,9 +94,15 @@ export class ClipboardHandler {
         return 'csv'
       
       case 'text/plain':
-      default:
+      default: {
         // Use content-based detection for plain text
-        return detectContentFormat(content)
+        const detectedFormat = detectContentFormat(content)
+        // For plain text that looks like markdown, prioritize markdown detection
+        if (detectedFormat === 'markdown') {
+          return 'markdown'
+        }
+        return detectedFormat
+      }
     }
   }
 

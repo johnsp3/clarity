@@ -98,7 +98,7 @@ interface StoreState {
 const generateTagColor = (name: string): string => {
   const colors = [
     'from-blue-400 to-blue-600',
-    'from-purple-400 to-purple-600',
+    'from-blue-500 to-blue-700',
     'from-pink-400 to-pink-600',
     'from-emerald-400 to-emerald-600',
     'from-orange-400 to-orange-600',
@@ -479,7 +479,7 @@ export const useStore = create<StoreState>((set, get) => ({
   },
   
   filteredNotes: () => {
-    const { notes, searchQuery, activeProjectId, quickAccessView, favoriteNoteIds, activeFolderId, searchFilters } = get()
+    const { notes, searchQuery, activeProjectId, quickAccessView, favoriteNoteIds, activeFolderId, searchFilters, viewMode } = get()
     let filtered = notes
     
     // Filter by quick access view
@@ -515,7 +515,30 @@ export const useStore = create<StoreState>((set, get) => ({
       )
     }
     
-    return filtered.sort((a, b) => b.updatedAt.getTime() - a.updatedAt.getTime())
+    // Apply sorting based on viewMode
+    return filtered.sort((a, b) => {
+      let comparison = 0
+      
+      switch (viewMode.sortBy) {
+        case 'modified':
+          comparison = b.updatedAt.getTime() - a.updatedAt.getTime()
+          break
+        case 'created':
+          comparison = b.createdAt.getTime() - a.createdAt.getTime()
+          break
+        case 'title':
+          comparison = a.title.toLowerCase().localeCompare(b.title.toLowerCase())
+          break
+        case 'manual':
+          comparison = a.order - b.order
+          break
+        default:
+          comparison = b.updatedAt.getTime() - a.updatedAt.getTime()
+      }
+      
+      // Apply sort order (asc/desc)
+      return viewMode.sortOrder === 'asc' ? -comparison : comparison
+    })
   },
   
   activeNote: () => {

@@ -107,7 +107,7 @@ export const NoteTagEditor: React.FC<NoteTagEditorProps> = ({ noteId, noteTags }
                   className="w-full flex items-center gap-2 px-3 py-2 text-sm text-left 
                            hover:bg-gray-50 rounded-lg transition-colors"
                 >
-                  <div className="w-6 h-6 rounded bg-gradient-to-r from-indigo-400 to-purple-400 
+                  <div className="w-6 h-6 rounded bg-gradient-to-r from-blue-400 to-blue-600 
                                 flex items-center justify-center">
                     <Plus size={12} strokeWidth={1.5} className="text-white" />
                   </div>

@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Clarity Sorting Test</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            padding: 20px;
+            background: #f5f5f7;
+        }
+        .test-container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        }
+        .test-step {
+            margin: 20px 0;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border-left: 4px solid #007AFF;
+        }
+        .success {
+            border-left-color: #10B981;
+            background: #f0fdf4;
+        }
+        .warning {
+            border-left-color: #F59E0B;
+            background: #fffbeb;
+        }
+        .error {
+            border-left-color: #EF4444;
+            background: #fef2f2;
+        }
+        .app-link {
+            display: inline-block;
+            background: #007AFF;
+            color: white;
+            padding: 12px 24px;
+            border-radius: 8px;
+            text-decoration: none;
+            margin: 10px 0;
+        }
+        .app-link:hover {
+            background: #0056CC;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>🔧 Clarity Sorting Functionality Test</h1>
+        <p>This test will help verify that the sorting functionality is working correctly in the Clarity note-taking application.</p>
+        
+        <a href="http://localhost:5173" target="_blank" class="app-link">Open Clarity App</a>
+        
+        <h2>Test Steps:</h2>
+        
+        <div class="test-step">
+            <h3>1. Open the Application</h3>
+            <p>Click the link above to open the Clarity application in a new tab.</p>
+        </div>
+        
+        <div class="test-step">
+            <h3>2. Create Test Notes</h3>
+            <p>Create at least 3-4 notes with different titles and at different times to test sorting:</p>
+            <ul>
+                <li>Note A - "Apple Note" (create first)</li>
+                <li>Note B - "Zebra Note" (create second)</li>
+                <li>Note C - "Beta Note" (create third)</li>
+                <li>Note D - "Charlie Note" (create fourth)</li>
+            </ul>
+        </div>
+        
+        <div class="test-step">
+            <h3>3. Test Sort by Last Modified</h3>
+            <p>Click the "Sort" button and select "Last Modified". The notes should be ordered by when they were last updated (newest first by default).</p>
+            <p><strong>Expected:</strong> Charlie Note → Beta Note → Zebra Note → Apple Note</p>
+        </div>
+        
+        <div class="test-step">
+            <h3>4. Test Sort by Date Created</h3>
+            <p>Click the "Sort" button and select "Date Created". The notes should be ordered by when they were created (newest first by default).</p>
+            <p><strong>Expected:</strong> Charlie Note → Beta Note → Zebra Note → Apple Note</p>
+        </div>
+        
+        <div class="test-step">
+            <h3>5. Test Sort by Title</h3>
+            <p>Click the "Sort" button and select "Title". The notes should be ordered alphabetically by title.</p>
+            <p><strong>Expected:</strong> Apple Note → Beta Note → Charlie Note → Zebra Note</p>
+        </div>
+        
+        <div class="test-step">
+            <h3>6. Test Sort Order Toggle</h3>
+            <p>With "Title" sorting selected, click "Sort Ascending" to reverse the order.</p>
+            <p><strong>Expected:</strong> Zebra Note → Charlie Note → Beta Note → Apple Note</p>
+        </div>
+        
+        <div class="test-step">
+            <h3>7. Verify Visual Indicators</h3>
+            <p>Check that:</p>
+            <ul>
+                <li>The sort button shows the current sort method (e.g., "Sort (Title)")</li>
+                <li>The sort icon rotates when switching between ascending/descending</li>
+                <li>The selected sort option has a checkmark in the dropdown</li>
+            </ul>
+        </div>
+        
+        <h2>Troubleshooting:</h2>
+        
+        <div class="test-step warning">
+            <h3>If sorting doesn't work:</h3>
+            <ul>
+                <li>Open browser developer tools (F12)</li>
+                <li>Check the console for any error messages</li>
+                <li>Look for sorting debug logs in the console</li>
+                <li>Verify that the viewMode state is updating correctly</li>
+            </ul>
+        </div>
+        
+        <div class="test-step success">
+            <h3>Success Criteria:</h3>
+            <p>✅ All three sort options (Last Modified, Date Created, Title) work correctly</p>
+            <p>✅ Sort order toggle (ascending/descending) works for all sort types</p>
+            <p>✅ Visual indicators show the current sort state</p>
+            <p>✅ No console errors related to sorting</p>
+        </div>
+    </div>
+</body>
+</html> 

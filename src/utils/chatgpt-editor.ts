@@ -11,6 +11,7 @@ export interface TransformationResult {
 export interface FormatDetectionResult {
   format: string
   confidence: 'high' | 'medium' | 'low'
+  reasoning?: string
 }
 
 // Text transformation using ChatGPT-4
@@ -31,7 +32,19 @@ export const transformText = async (
       professional: "Rewrite this text in a professional, formal business tone while maintaining clarity",
       concise: "Make this text more concise and to-the-point while keeping all important information",
       grammar: "Fix all grammar, spelling, and punctuation errors in this text. Keep the original tone and style",
-      markdown: "Convert this text to proper Markdown format with appropriate headers, lists, and formatting",
+      markdown: `Convert this text to properly formatted Markdown with the following structure:
+
+1. Preserve all paragraph breaks - each paragraph should be separated by a blank line
+2. Convert the title or first line to a main heading using # 
+3. Use appropriate subheadings (##, ###) for different sections
+4. Preserve the natural flow and structure of the content
+5. Use proper line breaks between paragraphs
+6. Format any lists with proper bullet points (-)
+7. Use **bold** for emphasis where appropriate
+8. Use *italics* for subtle emphasis
+9. Ensure proper spacing and readability
+
+The result should be clean, well-structured Markdown that renders beautifully when previewed.`,
       html: "Convert this text to clean, semantic HTML format with proper tags and structure",
       plaintext: "Convert this to plain text, removing all formatting while preserving the content structure"
     }
@@ -68,7 +81,7 @@ export const transformText = async (
   }
 }
 
-// Auto-detect format of pasted text using AI
+// Enhanced AI-powered format detection
 export const detectTextFormatAI = async (content: string): Promise<FormatDetectionResult> => {
   try {
     const openai = getOpenAIClient()
@@ -79,28 +92,102 @@ export const detectTextFormatAI = async (content: string): Promise<FormatDetecti
     }
     
     const response = await openai.chat.completions.create({
-      model: 'gpt-3.5-turbo', // Faster model for quick detection
+      model: 'gpt-3.5-turbo',
       messages: [
         { 
           role: 'system', 
-          content: 'Analyze the given text and determine its format. Respond with ONLY one word from: "markdown", "html", "code", "json", "xml", "csv", "rich", or "plain"'
+          content: `You are an expert at analyzing text content and determining its format. Analyze the given text and determine its format type.
+
+Respond with ONLY a JSON object in this exact format:
+{
+  "format": "one_word_format",
+  "confidence": "high|medium|low",
+  "reasoning": "brief explanation"
+}
+
+Valid formats are:
+- "markdown" - for Markdown syntax (headers with #, **bold**, *italic*, lists with -, etc.)
+- "html" - for HTML tags and markup
+- "code" - for programming code (functions, variables, syntax)
+- "json" - for JSON data structures
+- "xml" - for XML markup
+- "csv" - for comma-separated values
+- "rich" - for rich text with formatting
+- "word" - for Microsoft Word formatted content
+- "rtf" - for Rich Text Format
+- "plain" - for plain text without special formatting
+
+Pay special attention to:
+- Content starting with # followed by space and text = markdown header
+- Content with HTML tags like <p>, <div>, <h1> = html
+- Content with programming syntax = code
+- Content with curly braces and key-value pairs = json`
         },
-        { role: 'user', content: content.substring(0, 500) } // Sample for speed
+        { role: 'user', content: content.substring(0, 1000) } // Limit content for speed
       ],
       temperature: 0,
-      max_tokens: 10
+      max_tokens: 100
     })
     
-    const detectedFormat = response.choices[0].message.content.toLowerCase().trim()
-    const validFormats = ['markdown', 'html', 'code', 'json', 'xml', 'csv', 'rich', 'plain']
-    const format = validFormats.includes(detectedFormat) ? detectedFormat : 'plain'
-    
-    return {
-      format,
-      confidence: 'high'
+    try {
+      const result = JSON.parse(response.choices[0].message.content || '{}')
+      const validFormats = ['markdown', 'html', 'code', 'json', 'xml', 'csv', 'rich', 'word', 'rtf', 'plain']
+      const format = validFormats.includes(result.format) ? result.format : 'plain'
+      
+      return {
+        format,
+        confidence: result.confidence || 'high',
+        reasoning: result.reasoning
+      }
+    } catch {
+      // If JSON parsing fails, try simple format extraction
+      const responseText = response.choices[0].message.content?.toLowerCase() || ''
+      const validFormats = ['markdown', 'html', 'code', 'json', 'xml', 'csv', 'rich', 'word', 'rtf', 'plain']
+      
+      for (const format of validFormats) {
+        if (responseText.includes(format)) {
+          return { format, confidence: 'medium' }
+        }
+      }
+      
+      return { format: 'plain', confidence: 'low' }
     }
   } catch (error) {
+    console.error('AI format detection error:', error)
     // Fallback to local detection
+    const format = detectContentFormat(content)
+    return { format, confidence: 'low' }
+  }
+}
+
+// Real-time format detection for content changes
+export const detectFormatOnChange = async (content: string): Promise<FormatDetectionResult> => {
+  try {
+    console.log('🔍 AI Format Detection - Analyzing content:', JSON.stringify(content));
+    
+    // For very short content, use local detection for speed
+    if (content.trim().length < 10) {
+      const format = detectContentFormat(content)
+      console.log('📝 Short content detected as:', format);
+      return { format, confidence: 'medium' }
+    }
+    
+    // Check if OpenAI client is available before trying AI detection
+    const openai = getOpenAIClient()
+    if (!openai) {
+      console.log('⚠️ OpenAI client not available, using local detection');
+      const format = detectContentFormat(content)
+      return { format, confidence: 'medium' }
+    }
+    
+    // For longer content, use AI detection
+    console.log('🤖 Using AI detection for longer content...');
+    const result = await detectTextFormatAI(content);
+    console.log('🎯 AI detection result:', result);
+    return result;
+  } catch (error) {
+    console.error('❌ Error in detectFormatOnChange:', error);
+    // Always fallback to local detection
     const format = detectContentFormat(content)
     return { format, confidence: 'low' }
   }

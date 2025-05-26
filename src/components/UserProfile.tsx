@@ -34,9 +34,9 @@ export const UserProfile: React.FC<UserProfileProps> = ({ userEmail, onSignOut }
       <DropdownMenu.Trigger asChild>
         <button
           className="flex items-center gap-3 px-3 py-2 rounded-lg
-                   bg-white border border-[#E5E5E7] hover:border-[#D1D1D3]
-                   transition-colors duration-150 group"
-          title={userEmail} // Show full email on hover
+                   hover:bg-[#F5F5F7] active:scale-[0.98]
+                   transition-all duration-200 group focus-apple"
+          title={userEmail}
         >
           {/* Profile Picture */}
           <div className="w-8 h-8 rounded-full overflow-hidden flex-shrink-0">
@@ -48,8 +48,7 @@ export const UserProfile: React.FC<UserProfileProps> = ({ userEmail, onSignOut }
                 onError={() => setImageError(true)}
               />
             ) : (
-              <div className="w-full h-full bg-gradient-to-br from-blue-500 to-purple-600 
-                            flex items-center justify-center">
+              <div className="w-full h-full bg-[#007AFF] flex items-center justify-center">
                 <User size={16} className="text-white" />
               </div>
             )}
@@ -58,30 +57,30 @@ export const UserProfile: React.FC<UserProfileProps> = ({ userEmail, onSignOut }
           {/* User Info */}
           <div className="flex flex-col items-start min-w-0 flex-1">
             {displayName && (
-              <span className="text-sm font-medium text-gray-900 truncate max-w-[140px]">
+              <span className="text-[15px] font-medium text-[#1D1D1F] truncate max-w-[140px]">
                 {displayName}
               </span>
             )}
-            <span className="text-xs text-gray-600 truncate max-w-[140px]">
+            <span className="text-[13px] text-[#86868B] truncate max-w-[140px]">
               {userEmail}
             </span>
           </div>
           
           <ChevronDown 
             size={14} 
-            className="text-gray-400 group-hover:text-gray-600 transition-colors duration-150 flex-shrink-0" 
+            className="transition-colors duration-200 flex-shrink-0 text-[#86868B]"
           />
         </button>
       </DropdownMenu.Trigger>
 
       <DropdownMenu.Portal>
         <DropdownMenu.Content
-          className="min-w-[240px] bg-white rounded-lg shadow-lg border border-[#E5E5E7] p-1 z-50"
+          className="dropdown-apple min-w-[240px] z-apple-dropdown animate-apple-scale-in"
           sideOffset={8}
           align="end"
         >
-          <div className="px-3 py-3 border-b border-[#E5E5E7]">
-            <div className="flex items-center gap-3 mb-2">
+          <div className="px-4 py-4 border-b border-[#D2D2D7]">
+            <div className="flex items-center gap-3 mb-3">
               <div className="w-10 h-10 rounded-full overflow-hidden flex-shrink-0">
                 {photoURL && !imageError ? (
                   <img
@@ -91,36 +90,33 @@ export const UserProfile: React.FC<UserProfileProps> = ({ userEmail, onSignOut }
                     onError={() => setImageError(true)}
                   />
                 ) : (
-                  <div className="w-full h-full bg-gradient-to-br from-blue-500 to-purple-600 
-                                flex items-center justify-center">
+                  <div className="w-full h-full bg-[#007AFF] flex items-center justify-center">
                     <User size={18} className="text-white" />
                   </div>
                 )}
               </div>
               <div className="min-w-0 flex-1">
                 {displayName && (
-                  <p className="text-sm font-medium text-gray-900 truncate">
+                  <p className="text-[15px] font-medium text-[#1D1D1F] truncate">
                     {displayName}
                   </p>
                 )}
-                <p className="text-xs text-gray-600 truncate" title={userEmail}>
+                <p className="text-[13px] text-[#86868B] truncate" title={userEmail}>
                   {userEmail}
                 </p>
               </div>
             </div>
-            <p className="text-xs text-gray-500 uppercase tracking-wider font-medium">
-              Signed in with Google
+            <p className="text-apple-footnote">
+              SIGNED IN WITH GOOGLE
             </p>
           </div>
 
           <DropdownMenu.Item 
             onClick={handleSignOut}
             disabled={isSigningOut}
-            className="flex items-center gap-2 px-3 py-2 text-sm rounded hover:bg-gray-50 
-                     cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed
-                     text-red-600 hover:text-red-700"
+            className="dropdown-item-apple text-red-600 hover:text-red-700 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            <LogOut size={14} />
+            <LogOut size={16} />
             {isSigningOut ? 'Signing out...' : 'Sign Out'}
           </DropdownMenu.Item>
         </DropdownMenu.Content>

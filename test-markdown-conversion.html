@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Markdown Conversion Test</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        .test-section {
+            margin: 30px 0;
+            padding: 20px;
+            border: 1px solid #e5e5e7;
+            border-radius: 8px;
+        }
+        .original {
+            background-color: #f8f9fa;
+        }
+        .converted {
+            background-color: #e8f5e9;
+        }
+        pre {
+            background-color: #f5f5f5;
+            padding: 15px;
+            border-radius: 6px;
+            overflow-x: auto;
+            white-space: pre-wrap;
+        }
+        h1, h2, h3 {
+            color: #1a1a1a;
+        }
+        .success {
+            color: #28a745;
+            font-weight: bold;
+        }
+        .error {
+            color: #dc3545;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <h1>Markdown Conversion Test</h1>
+    <p>This test verifies that the AI markdown conversion creates properly structured markdown.</p>
+
+    <div class="test-section original">
+        <h2>Original Text (Plain Text)</h2>
+        <pre id="original-text">Destiny
+
+Hey there,
+
+I've been thinking a lot about destiny lately, and I wanted to share a few thoughts with you.
+
+Some people say destiny is this invisible force that guides our lives, almost like it's written in the stars. Others believe we carve out our own path with every choice we make. I'm not sure which is true, but it's fascinating to think about. Sometimes life feels like we're being pulled in a direction we didn't plan, and yet, it all somehow makes sense later.
+
+Cultures around the world have always told stories about destiny — like it's something magical or sacred. Even philosophers have argued about whether it's real or just something we tell ourselves. Personally, I think it can be comforting to believe that there's a reason for everything, especially when things get tough. And I've noticed that in books and movies, characters always have some kind of destiny to fulfill. Maybe we all do in our own way.
+
+Anyway, just felt like putting this out there. Hope you're doing well, and that whatever your path looks like, it leads somewhere amazing.
+
+Talk soon,
+
+[Your Name]</pre>
+    </div>
+
+    <div class="test-section converted">
+        <h2>Expected Markdown Output</h2>
+        <pre id="expected-markdown"># Destiny
+
+Hey there,
+
+I've been thinking a lot about destiny lately, and I wanted to share a few thoughts with you.
+
+Some people say destiny is this invisible force that guides our lives, almost like it's written in the stars. Others believe we carve out our own path with every choice we make. I'm not sure which is true, but it's fascinating to think about. Sometimes life feels like we're being pulled in a direction we didn't plan, and yet, it all somehow makes sense later.
+
+Cultures around the world have always told stories about destiny — like it's something magical or sacred. Even philosophers have argued about whether it's real or just something we tell ourselves. Personally, I think it can be comforting to believe that there's a reason for everything, especially when things get tough. And I've noticed that in books and movies, characters always have some kind of destiny to fulfill. Maybe we all do in our own way.
+
+Anyway, just felt like putting this out there. Hope you're doing well, and that whatever your path looks like, it leads somewhere amazing.
+
+Talk soon,
+
+[Your Name]</pre>
+    </div>
+
+    <div class="test-section">
+        <h2>Test Instructions</h2>
+        <ol>
+            <li>Open the Clarity app in your browser</li>
+            <li>Create a new note</li>
+            <li>Copy and paste the original text above into the note</li>
+            <li>Click the "AI Edit" button</li>
+            <li>Select "Format" → "Convert to Markdown"</li>
+            <li>Toggle the "Preview" button to see the rendered markdown</li>
+            <li>Verify that:
+                <ul>
+                    <li>The title "Destiny" becomes a proper # heading</li>
+                    <li>Paragraphs are separated by blank lines</li>
+                    <li>The content maintains its structure and readability</li>
+                    <li>The preview shows beautiful formatted text with proper headings</li>
+                </ul>
+            </li>
+        </ol>
+    </div>
+
+    <div class="test-section">
+        <h2>Success Criteria</h2>
+        <ul>
+            <li><span class="success">✓</span> Title is converted to # heading</li>
+            <li><span class="success">✓</span> Paragraphs are properly separated</li>
+            <li><span class="success">✓</span> Content structure is preserved</li>
+            <li><span class="success">✓</span> Preview renders beautifully</li>
+            <li><span class="success">✓</span> Format detection shows "Markdown Format"</li>
+        </ul>
+    </div>
+
+    <script>
+        // Simple test to verify the expected structure
+        function validateMarkdown(markdown) {
+            const tests = [
+                {
+                    name: "Has main heading",
+                    test: () => markdown.startsWith('# Destiny'),
+                    result: null
+                },
+                {
+                    name: "Has proper paragraph separation",
+                    test: () => markdown.includes('\n\n'),
+                    result: null
+                },
+                {
+                    name: "Preserves content structure",
+                    test: () => markdown.includes('Hey there,') && markdown.includes('[Your Name]'),
+                    result: null
+                },
+                {
+                    name: "Has reasonable length",
+                    test: () => markdown.length > 500,
+                    result: null
+                }
+            ];
+
+            tests.forEach(test => {
+                test.result = test.test();
+            });
+
+            return tests;
+        }
+
+        console.log('Markdown conversion test ready. Use validateMarkdown(yourMarkdownString) to test.');
+    </script>
+</body>
+</html> 

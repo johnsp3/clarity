@@ -2,76 +2,44 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Enterprise Design System 2025 */
+/* Apple Design System 2025 - Premium & Refined */
 :root {
-  /* Primary Palette - NO GRADIENTS */
+  /* Apple Color System */
+  --apple-blue: #007AFF;
+  --text-primary: #1D1D1F;
+  --text-secondary: #86868B;
   --bg-primary: #FFFFFF;
-  --bg-secondary: #FAFAFA;
-  --bg-tertiary: #F5F5F5;
-  --bg-hover: #F0F0F0;
-  --bg-active: #E8E8E8;
+  --bg-secondary: #F5F5F7;
+  --bg-hover: #F5F5F7;
+  --border-color: #D2D2D7;
+  --shadow: 0 2px 4px rgba(0,0,0,0.08);
   
-  /* Borders - Clean & Minimal */
-  --border-primary: #E5E5E7;
-  --border-secondary: #D1D1D3;
-  --border-active: #0F62FE;
-  
-  /* Text Hierarchy */
-  --text-primary: #1A1A1A;
-  --text-secondary: #6B6B6B;
-  --text-tertiary: #9B9B9B;
-  --text-inverse: #FFFFFF;
-  
-  /* Accent Colors - Use SPARINGLY */
-  --accent-primary: #0F62FE; /* IBM Blue */
-  --accent-hover: #0043CE;
-  --accent-light: #E5F0FF;
-  --accent-text: #0F62FE;
-  
-  /* Status Colors - Semantic Only */
-  --success: #24A148;
-  --success-bg: #E5F6EC;
-  --warning: #F1C232;
-  --warning-bg: #FFF8E1;
-  --error: #DA1E28;
-  --error-bg: #FFEBEE;
-  
-  /* Professional Shadows - Subtle */
-  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
-  --shadow-md: 0 2px 4px rgba(0, 0, 0, 0.06);
-  --shadow-lg: 0 4px 6px rgba(0, 0, 0, 0.07);
-  --shadow-xl: 0 8px 16px rgba(0, 0, 0, 0.08);
-  
-  /* Layout Dimensions */
-  --sidebar-width: 240px;
+  /* Layout */
+  --sidebar-width: 260px;
   --notelist-width: 320px;
-  --toolbar-height: 48px;
-  --statusbar-height: 32px;
+  --topbar-height: 52px;
   
-  /* Professional Transitions */
-  --transition-fast: 150ms;
-  --transition-normal: 200ms;
-  
-  /* Border Radius - Minimal */
-  --radius-sm: 4px;
-  --radius-md: 6px;
-  --radius-lg: 8px;
+  /* Transitions */
+  --transition-fast: 200ms ease-out;
 }
 
-/* Enterprise Base Styles */
+/* Apple Base Styles */
 @layer base {
   * {
     @apply antialiased;
   }
 
   body {
-    @apply bg-white text-[#1A1A1A];
-    font-family: Inter, -apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif;
-    font-size: 14px;
+    @apply bg-white text-[#1D1D1F];
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', system-ui, sans-serif;
+    font-size: 17px;
     line-height: 1.5;
+    font-weight: 400;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
 
-  /* Professional Scrollbar */
+  /* Apple Scrollbar */
   ::-webkit-scrollbar {
     width: 8px;
     height: 8px;
@@ -82,171 +50,208 @@
   }
 
   ::-webkit-scrollbar-thumb {
-    background: #D1D1D3;
+    background: rgba(0, 0, 0, 0.2);
     border-radius: 4px;
   }
 
   ::-webkit-scrollbar-thumb:hover {
-    background: #B8B8BA;
+    background: rgba(0, 0, 0, 0.3);
   }
   
-  /* Selection */
+  /* Apple Selection */
   ::selection {
-    background-color: var(--accent-light);
+    background-color: rgba(0, 122, 255, 0.2);
     color: var(--text-primary);
   }
 }
 
 @layer components {
-  /* Enterprise Button System */
-  .btn-primary {
-    @apply px-4 py-2 bg-[#0F62FE] text-white font-medium rounded-md
-           hover:bg-[#0043CE] active:bg-[#002C9C]
-           transition-colors duration-150 text-sm;
+  /* Apple Button System */
+  .btn-apple-primary {
+    @apply px-6 py-2 bg-[#007AFF] text-white font-medium rounded-lg
+           hover:bg-[#0056CC] active:scale-[0.98]
+           transition-all duration-200 text-[15px] leading-tight;
   }
   
-  .btn-secondary {
-    @apply px-4 py-2 bg-white text-[#1A1A1A] font-medium rounded-md
-           border border-[#E5E5E7] hover:bg-[#FAFAFA] active:bg-[#F0F0F0]
-           transition-colors duration-150 text-sm;
+  .btn-apple-secondary {
+    @apply px-6 py-2 bg-white text-[#1D1D1F] font-medium rounded-lg
+           border border-[#D2D2D7] hover:bg-[#F5F5F7] active:scale-[0.98]
+           transition-all duration-200 text-[15px] leading-tight;
   }
   
-  .btn-ghost {
-    @apply px-3 py-1.5 text-[#6B6B6B] font-medium rounded
-           hover:bg-[#F0F0F0] active:bg-[#E8E8E8]
-           transition-colors duration-150 text-sm;
+  .btn-apple-ghost {
+    @apply px-4 py-2 text-[#1D1D1F] font-medium rounded-lg
+           hover:bg-[#F5F5F7] active:scale-[0.98]
+           transition-all duration-200 text-[15px] leading-tight;
   }
   
-  .btn-icon {
-    @apply w-8 h-8 flex items-center justify-center rounded
-           text-[#6B6B6B] hover:bg-[#F0F0F0] active:bg-[#E8E8E8]
-           transition-colors duration-150;
+  .btn-apple-icon {
+    @apply w-8 h-8 flex items-center justify-center rounded-lg
+           text-[#1D1D1F] hover:bg-[#F5F5F7] active:scale-[0.98]
+           transition-all duration-200;
   }
 
-  /* Professional Input Styles */
-  .input-enterprise {
-    @apply w-full px-3 py-2 bg-white rounded-md text-sm
-           border border-[#E5E5E7] 
-           focus:border-[#0F62FE] focus:outline-none focus:ring-1 focus:ring-[#0F62FE]
-           transition-all duration-150 placeholder-[#9B9B9B];
+  /* Apple Input Styles */
+  .input-apple {
+    @apply w-full px-4 py-3 bg-[#F5F5F7] rounded-lg text-[15px] leading-tight
+           border-0 focus:outline-none focus:ring-2 focus:ring-[#007AFF] focus:ring-opacity-20
+           transition-all duration-200 placeholder-[#86868B];
   }
   
-  /* Typography System */
-  .text-heading-lg {
-    @apply text-xl font-semibold text-[#1A1A1A] leading-tight;
+  /* Apple Typography System */
+  .text-apple-title-lg {
+    @apply text-[28px] font-medium text-[#1D1D1F] leading-tight;
   }
   
-  .text-heading-md {
-    @apply text-base font-semibold text-[#1A1A1A] leading-tight;
+  .text-apple-title-md {
+    @apply text-[22px] font-medium text-[#1D1D1F] leading-tight;
   }
   
-  .text-heading-sm {
-    @apply text-sm font-semibold text-[#1A1A1A] leading-tight;
+  .text-apple-title-sm {
+    @apply text-[20px] font-medium text-[#1D1D1F] leading-tight;
   }
   
-  .text-body {
-    @apply text-sm text-[#1A1A1A] leading-relaxed;
+  .text-apple-body {
+    @apply text-[17px] text-[#1D1D1F] leading-relaxed;
   }
   
-  .text-body-secondary {
-    @apply text-sm text-[#6B6B6B] leading-relaxed;
+  .text-apple-body-secondary {
+    @apply text-[17px] text-[#86868B] leading-relaxed;
   }
   
-  .text-caption {
-    @apply text-xs text-[#9B9B9B];
+  .text-apple-caption {
+    @apply text-[13px] text-[#86868B] leading-tight;
   }
   
-  /* Enterprise Card */
-  .card-enterprise {
-    @apply bg-white rounded-md border border-[#E5E5E7]
-           hover:border-[#D1D1D3] transition-all duration-150;
+  .text-apple-footnote {
+    @apply text-[11px] uppercase tracking-wider font-medium text-[#86868B];
   }
   
-  /* Toolbar Item */
-  .toolbar-item {
-    @apply px-2 py-1 rounded text-[#6B6B6B] text-sm
-           hover:bg-[#F0F0F0] active:bg-[#E8E8E8]
-           transition-colors duration-150 cursor-pointer
-           flex items-center gap-2;
+  /* Apple Card */
+  .card-apple {
+    @apply bg-white rounded-lg;
+    box-shadow: var(--shadow);
   }
   
-  .toolbar-item-active {
-    @apply text-[#0F62FE] bg-[#E5F0FF];
+  /* Apple Sidebar Item */
+  .sidebar-item {
+    @apply px-4 py-2 rounded-lg text-[15px] font-normal
+           hover:bg-[#F5F5F7] active:scale-[0.98]
+           transition-all duration-200 cursor-pointer
+           flex items-center gap-3;
+    height: 36px;
   }
   
-  /* Note Card */
+  .sidebar-item-active {
+    @apply bg-[#F5F5F7] text-[#007AFF] font-medium;
+  }
+  
+  /* Apple Note Card */
   .note-card {
-    @apply px-4 py-3 bg-white border-b border-[#E5E5E7] cursor-pointer
-           hover:bg-[#FAFAFA] transition-colors duration-150;
+    @apply px-4 py-3 bg-white cursor-pointer
+           hover:bg-[#F5F5F7] transition-all duration-200;
   }
   
   .note-card-active {
-    @apply bg-white border-l-2 border-l-[#0F62FE] hover:bg-white;
+    @apply bg-[#F5F5F7] hover:bg-[#F5F5F7];
+    border-left: 2px solid #007AFF;
   }
   
-  /* Status Badge */
-  .badge {
-    @apply inline-flex items-center px-2 py-0.5 rounded text-xs font-medium;
+  /* Apple Toolbar */
+  .toolbar-apple {
+    @apply bg-white rounded-lg p-1 flex items-center gap-1;
+    box-shadow: var(--shadow);
   }
   
-  .badge-success {
-    @apply bg-[#E5F6EC] text-[#24A148];
+  .toolbar-button {
+    @apply w-8 h-8 flex items-center justify-center rounded-md
+           text-[#1D1D1F] hover:bg-[#F5F5F7] active:scale-[0.98]
+           transition-all duration-200;
   }
   
-  .badge-warning {
-    @apply bg-[#FFF8E1] text-[#A57F00];
+  .toolbar-button-active {
+    @apply bg-[#F5F5F7] text-[#007AFF];
   }
   
-  .badge-error {
-    @apply bg-[#FFEBEE] text-[#DA1E28];
+  /* Apple Focus States */
+  .focus-apple {
+    @apply focus-visible:outline-none focus-visible:ring-2 
+           focus-visible:ring-[#007AFF] focus-visible:ring-opacity-50 focus-visible:ring-offset-2;
   }
   
-  .badge-info {
-    @apply bg-[#E5F0FF] text-[#0F62FE];
+  /* Apple Divider */
+  .divider-apple {
+    @apply h-px bg-[#D2D2D7];
   }
-  
-  /* Divider */
-  .divider-horizontal {
-    @apply h-px bg-[#E5E5E7] my-2;
+
+  /* Apple Search Bar */
+  .search-apple {
+    @apply w-60 px-4 py-2 bg-[#F5F5F7] rounded-lg text-[15px]
+           border-0 focus:outline-none focus:ring-2 focus:ring-[#007AFF] focus:ring-opacity-20
+           transition-all duration-200 placeholder-[#86868B];
   }
-  
-  .divider-vertical {
-    @apply w-px bg-[#E5E5E7] mx-2 h-4;
+
+  /* Apple Menu Button */
+  .menu-button-apple {
+    @apply px-4 py-2 text-[15px] font-normal text-[#1D1D1F]
+           hover:bg-[#F5F5F7] rounded-lg transition-all duration-200
+           flex items-center gap-2;
+  }
+
+  /* Apple Dropdown */
+  .dropdown-apple {
+    @apply bg-white rounded-lg border border-[#D2D2D7] p-1;
+    box-shadow: var(--shadow);
+  }
+
+  .dropdown-item-apple {
+    @apply px-4 py-2 text-[15px] rounded-lg hover:bg-[#F5F5F7] 
+           cursor-pointer transition-all duration-200 flex items-center gap-3;
   }
 }
 
 @layer utilities {
-  /* Density Classes */
-  .density-comfortable {
-    --spacing-unit: 1rem;
+  /* Apple Spacing System (8px grid) */
+  .space-apple-xs { @apply gap-2; }
+  .space-apple-sm { @apply gap-3; }
+  .space-apple-md { @apply gap-4; }
+  .space-apple-lg { @apply gap-6; }
+  .space-apple-xl { @apply gap-8; }
+  
+  /* Apple Padding System */
+  .p-apple-xs { @apply p-2; }
+  .p-apple-sm { @apply p-3; }
+  .p-apple-md { @apply p-4; }
+  .p-apple-lg { @apply p-6; }
+  .p-apple-xl { @apply p-8; }
+  
+  /* Apple Z-index System */
+  .z-apple-dropdown { z-index: 10; }
+  .z-apple-modal { z-index: 50; }
+  .z-apple-popover { z-index: 60; }
+  
+  /* Apple Animations */
+  .animate-apple-fade-in {
+    animation: apple-fade-in 200ms ease-out;
   }
   
-  .density-compact {
-    --spacing-unit: 0.75rem;
+  .animate-apple-scale-in {
+    animation: apple-scale-in 200ms ease-out;
   }
-  
-  .density-dense {
-    --spacing-unit: 0.5rem;
+}
+
+@keyframes apple-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes apple-scale-in {
+  from { 
+    opacity: 0; 
+    transform: scale(0.95); 
   }
-  
-  /* Professional Focus States */
-  .focus-visible-enterprise {
-    @apply focus-visible:outline-none focus-visible:ring-2 
-           focus-visible:ring-[#0F62FE] focus-visible:ring-offset-2;
+  to { 
+    opacity: 1; 
+    transform: scale(1); 
   }
-  
-  /* Z-index System */
-  .z-base { z-index: 0; }
-  .z-dropdown { z-index: 10; }
-  .z-sticky { z-index: 20; }
-  .z-fixed { z-index: 30; }
-  .z-overlay { z-index: 50; }
-  .z-modal { z-index: 60; }
-  .z-popover { z-index: 70; }
-  .z-tooltip { z-index: 80; }
-  .z-notification { z-index: 90; }
-  
-  /* Remove all gradient utilities */
-  /* Remove all playful animations */
-  /* Keep only essential, subtle transitions */
 } 

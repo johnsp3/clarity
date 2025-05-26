@@ -14,7 +14,7 @@ export const TagManager: React.FC = () => {
 
   const tagColors = [
     'from-blue-400 to-blue-600',
-    'from-purple-400 to-purple-600',
+    'from-blue-500 to-blue-700',
     'from-pink-400 to-pink-600',
     'from-emerald-400 to-emerald-600',
     'from-orange-400 to-orange-600',
@@ -102,7 +102,7 @@ export const TagManager: React.FC = () => {
               <button
                 onClick={handleCreateTag}
                 disabled={!newTagName.trim()}
-                className="px-4 py-2.5 bg-gradient-to-r from-indigo-500 to-purple-600 
+                className="px-4 py-2.5 bg-gradient-to-r from-blue-500 to-blue-600 
                          text-white rounded-xl font-medium shadow-sm hover:shadow-md 
                          transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed
                          flex items-center gap-2"

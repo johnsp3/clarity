@@ -157,7 +157,7 @@ function isXMLFormat(content: string): boolean {
  */
 function isMarkdownFormat(content: string): boolean {
   const markdownPatterns = [
-    /^#{1,6}\s+.+$/m,           // Headers (# ## ### etc)
+    /^#{1,6}\s+.+$/m,           // Headers (# ## ### etc) - most important
     /^\*{3,}$/m,                // Horizontal rules (asterisks)
     /^-{3,}$/m,                 // Horizontal rules (dashes)
     /^_{3,}$/m,                 // Horizontal rules (underscores)
@@ -184,12 +184,20 @@ function isMarkdownFormat(content: string): boolean {
 
   const markdownScore = markdownPatterns.filter(pattern => pattern.test(content)).length
   
-  // Also check for common markdown document structure
-  const hasMarkdownStructure = /^#\s+.+\n\n/.test(content) || // Title + content
-                               content.split('\n').some(line => /^#{1,6}\s/.test(line))
+  // Check for common markdown document structure
+  const hasMarkdownStructure = /^#\s+.+(\n|$)/.test(content) || // Title at start
+                               content.split('\n').some(line => /^#{1,6}\s/.test(line)) // Any header
 
-  // Require a higher threshold for markdown detection to avoid false positives
-  return markdownScore >= 3 || (markdownScore >= 2 && hasMarkdownStructure)
+  // Special case: if content starts with a header (like "# OverKill"), it's very likely Markdown
+  const startsWithHeader = /^#{1,6}\s+.+/.test(content.trim())
+  
+  // More lenient detection - if it starts with a header, that's a strong indicator
+  if (startsWithHeader) {
+    return true
+  }
+  
+  // Require lower threshold for markdown detection
+  return markdownScore >= 2 || (markdownScore >= 1 && hasMarkdownStructure)
 }
 
 /**

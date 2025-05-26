@@ -31,13 +31,17 @@ export const ContentPreview: React.FC<ContentPreviewProps> = ({
       return
     }
 
+    console.log('🎨 Preview rendering content:', JSON.stringify(content), 'as format:', format)
+
     let renderedContent = ''
     
     switch (format) {
       case 'markdown':
         // Parse markdown to HTML
         try {
+          console.log('📝 Parsing Markdown content:', content)
           renderedContent = marked(content) as string
+          console.log('✅ Markdown rendered to:', renderedContent.substring(0, 100) + '...')
         } catch (error) {
           console.error('Markdown parsing error:', error)
           renderedContent = `<pre class="error-preview">Error parsing Markdown:\n${escapeHtml(content)}</pre>`
@@ -513,6 +517,17 @@ function getPreviewStyles(): string {
       font-size: 14px;
       line-height: 1.6;
       color: #1A1A1A;
+    }
+
+    /* Task list styles */
+    .prose input[type="checkbox"] {
+      margin-right: 8px;
+      transform: scale(1.1);
+    }
+    
+    .prose li:has(input[type="checkbox"]) {
+      list-style: none;
+      margin-left: -1.5em;
     }
 
     /* CSV table styles */

@@ -10,30 +10,30 @@ export default {
         sans: ['Inter', '-apple-system', 'BlinkMacSystemFont', 'SF Pro Text', 'system-ui', 'sans-serif'],
       },
       colors: {
-        // Enterprise color palette
+        // Apple-inspired color palette
         gray: {
           50: '#FAFAFA',
-          100: '#F5F5F5',
-          200: '#E5E5E7',
+          100: '#F5F5F7',
+          200: '#E5E5E5',
           300: '#D1D1D3',
           400: '#B8B8BA',
           500: '#9B9B9B',
           600: '#6B6B6B',
           700: '#4A4A4A',
           800: '#2E2E2E',
-          900: '#1A1A1A',
+          900: '#000000',
         },
         blue: {
-          50: '#E5F0FF',
-          100: '#CCE1FF',
-          200: '#99C3FF',
-          300: '#66A5FF',
-          400: '#3387FF',
-          500: '#0F62FE', // Primary accent
-          600: '#0043CE',
-          700: '#002C9C',
-          800: '#001D6C',
-          900: '#001141',
+          50: 'rgba(0, 122, 255, 0.1)',
+          100: 'rgba(0, 122, 255, 0.2)',
+          200: 'rgba(0, 122, 255, 0.3)',
+          300: 'rgba(0, 122, 255, 0.4)',
+          400: 'rgba(0, 122, 255, 0.6)',
+          500: '#007AFF', // Primary accent
+          600: '#0056CC',
+          700: '#004499',
+          800: '#003366',
+          900: '#002244',
         },
         green: {
           50: '#E5F6EC',
@@ -52,45 +52,41 @@ export default {
         },
       },
       borderRadius: {
-        sm: '4px',
-        DEFAULT: '6px',
-        md: '6px',
-        lg: '8px',
+        sm: '6px',
+        DEFAULT: '8px',
+        md: '8px',
+        lg: '12px',
+        xl: '16px',
       },
       boxShadow: {
-        sm: '0 1px 2px rgba(0, 0, 0, 0.05)',
-        DEFAULT: '0 2px 4px rgba(0, 0, 0, 0.06)',
-        md: '0 2px 4px rgba(0, 0, 0, 0.06)',
-        lg: '0 4px 6px rgba(0, 0, 0, 0.07)',
-        xl: '0 8px 16px rgba(0, 0, 0, 0.08)',
+        sm: '0 1px 3px rgba(0, 0, 0, 0.1)',
+        DEFAULT: '0 4px 6px rgba(0, 0, 0, 0.07)',
+        md: '0 4px 6px rgba(0, 0, 0, 0.07)',
+        lg: '0 10px 15px rgba(0, 0, 0, 0.1)',
+        xl: '0 20px 25px rgba(0, 0, 0, 0.1)',
       },
       transitionDuration: {
         150: '150ms',
         200: '200ms',
       },
       animation: {
-        // Remove all playful animations, keep only essential ones
-        'fade-in': 'fadeIn 150ms ease-out',
-        'fade-out': 'fadeOut 150ms ease-out',
-        'slide-down': 'slideDown 200ms ease-out',
-        'slide-up': 'slideUp 200ms ease-out',
+        // Apple-style animations
+        'apple-fade-in': 'appleFadeIn 200ms cubic-bezier(0.4, 0.0, 0.2, 1)',
+        'apple-scale-in': 'appleScaleIn 200ms cubic-bezier(0.4, 0.0, 0.2, 1)',
+        'apple-slide-down': 'appleSlideDown 200ms cubic-bezier(0.4, 0.0, 0.2, 1)',
       },
       keyframes: {
-        fadeIn: {
+        appleFadeIn: {
           '0%': { opacity: '0' },
           '100%': { opacity: '1' },
         },
-        fadeOut: {
-          '0%': { opacity: '1' },
-          '100%': { opacity: '0' },
+        appleScaleIn: {
+          '0%': { opacity: '0', transform: 'scale(0.95)' },
+          '100%': { opacity: '1', transform: 'scale(1)' },
         },
-        slideDown: {
-          '0%': { transform: 'translateY(-4px)', opacity: '0' },
-          '100%': { transform: 'translateY(0)', opacity: '1' },
-        },
-        slideUp: {
-          '0%': { transform: 'translateY(4px)', opacity: '0' },
-          '100%': { transform: 'translateY(0)', opacity: '1' },
+        appleSlideDown: {
+          '0%': { opacity: '0', transform: 'translateY(-8px)' },
+          '100%': { opacity: '1', transform: 'translateY(0)' },
         },
       },
       fontSize: {

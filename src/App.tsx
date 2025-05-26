@@ -6,11 +6,14 @@ import { EnhancedSidebar } from './components/EnhancedSidebar'
 import { EnhancedNoteList } from './components/EnhancedNoteList'
 import { Editor } from './components/Editor'
 import { CommandPalette } from './components/CommandPalette'
-import { UserProfile } from './components/UserProfile'
+
 import { SearchPanel } from './components/SearchPanel'
+import { SettingsPanel } from './components/SettingsPanel'
+import { ImportManager } from './components/ImportManager'
 import { useStore } from './store/useStore'
 import { onAuthStateChanged } from 'firebase/auth'
-
+import { Search, MoreHorizontal, Download, Upload, Settings } from 'lucide-react'
+import * as DropdownMenu from '@radix-ui/react-dropdown-menu'
 
 function App() {
   const [isConfigured, setIsConfigured] = useState(false);
@@ -19,10 +22,15 @@ function App() {
   const [authLoading, setAuthLoading] = useState(true);
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [showSearch, setShowSearch] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
+  const [showImport, setShowImport] = useState(false);
   const loadDataFromFirebase = useStore(state => state.loadDataFromFirebase);
   const isLoadingData = useStore(state => state.isLoading);
   const updateNote = useStore(state => state.updateNote);
   const activeNote = useStore(state => state.activeNote);
+  const addNote = useStore(state => state.addNote);
+  const setCommandPaletteOpen = useStore(state => state.setCommandPaletteOpen);
+  const notes = useStore(state => state.notes);
 
   useEffect(() => {
     // Check for reset parameter
@@ -93,7 +101,7 @@ function App() {
       }
       
       // Show error to user
-      alert(`Sign in failed: ${error?.message || 'Unknown error'}`);
+      alert(error?.message || 'Sign in failed');
     }
   };
 
@@ -103,7 +111,41 @@ function App() {
     window.location.reload();
   };
 
+  const handleCreateNote = () => {
+    addNote({
+      title: 'Untitled Note',
+      content: '',
+      projectId: null,
+      folderId: null,
+      tags: [],
+      type: 'markdown',
+      hasImages: false,
+      hasCode: false,
+      format: 'markdown',
+    });
+  };
 
+  const handleExportNotes = () => {
+    try {
+      const dataStr = JSON.stringify(notes, null, 2);
+      const dataBlob = new Blob([dataStr], { type: 'application/json' });
+      const url = URL.createObjectURL(dataBlob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `clarity-notes-${new Date().toISOString().split('T')[0]}.json`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('Export failed:', error);
+      alert('Failed to export notes. Please try again.');
+    }
+  };
+
+  const handleResetApp = () => {
+    window.location.href = '/?reset=true';
+  };
 
   if (loading || authLoading) {
     return (
@@ -163,31 +205,80 @@ function App() {
   }
 
   return (
-    <div className="flex h-screen bg-gray-50">
-      <EnhancedSidebar />
+    <div className="flex h-screen bg-white">
+      <EnhancedSidebar 
+        onShowSearch={() => setShowSearch(true)}
+        userEmail={currentUser?.email || ''}
+        onSignOut={handleSignOut}
+      />
       <EnhancedNoteList />
       <div className="flex-1 flex flex-col">
-        {/* Top bar with user profile */}
-        <div className="h-16 bg-white border-b border-[#E5E5E7] flex items-center justify-between px-6">
-          <div className="flex items-center gap-3">
-            <h1 className="text-lg font-semibold text-gray-900">Clarity</h1>
-          </div>
-          <div className="flex items-center gap-3">
+        {/* Apple-style Top Navigation Bar */}
+        <div className="h-[52px] bg-white border-b border-[#D2D2D7] flex items-center justify-between px-8">
+          <div className="flex items-center gap-8">
+            <h1 className="text-apple-title-sm">Clarity</h1>
+            
+            {/* Integrated Search Bar */}
             <button
-              onClick={() => setShowSearch(true)}
-              className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium bg-blue-100 text-blue-700 hover:bg-blue-200 transition-all"
+              onClick={() => setCommandPaletteOpen(true)}
+              className="search-apple flex items-center gap-3"
             >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-              </svg>
-              <span>AI Search</span>
+              <Search size={16} className="text-[#86868B]" />
+              <span className="flex-1 text-left">Search</span>
+              <span className="text-[13px] text-[#86868B]">⌘K</span>
             </button>
-            <UserProfile 
-              userEmail={currentUser?.email || ''} 
-              onSignOut={handleSignOut}
-            />
+          </div>
+          
+          <div className="flex items-center gap-6">
+            {/* Create Button */}
+            <button
+              onClick={handleCreateNote}
+              className="btn-apple-primary"
+            >
+              Create
+            </button>
+            
+            {/* Tools Menu */}
+            <DropdownMenu.Root>
+              <DropdownMenu.Trigger asChild>
+                <button className="menu-button-apple">
+                  <MoreHorizontal size={16} />
+                  Tools
+                </button>
+              </DropdownMenu.Trigger>
+              <DropdownMenu.Portal>
+                <DropdownMenu.Content
+                  className="dropdown-apple min-w-[200px] z-apple-dropdown animate-apple-scale-in"
+                  sideOffset={5}
+                >
+                  <DropdownMenu.Item 
+                    onClick={() => setShowImport(true)}
+                    className="dropdown-item-apple"
+                  >
+                    <Upload size={16} className="text-[#86868B]" />
+                    Import Notes
+                  </DropdownMenu.Item>
+                  <DropdownMenu.Item 
+                    onClick={handleExportNotes}
+                    className="dropdown-item-apple"
+                  >
+                    <Download size={16} className="text-[#86868B]" />
+                    Export Notes
+                  </DropdownMenu.Item>
+                  <DropdownMenu.Separator className="divider-apple my-1" />
+                  <DropdownMenu.Item 
+                    onClick={() => setShowSettings(true)}
+                    className="dropdown-item-apple"
+                  >
+                    <Settings size={16} className="text-[#86868B]" />
+                    Settings
+                  </DropdownMenu.Item>
+                </DropdownMenu.Content>
+              </DropdownMenu.Portal>
+            </DropdownMenu.Root>
           </div>
         </div>
+        
         {/* Editor content */}
         <div className="flex-1">
           <Editor />
@@ -205,6 +296,17 @@ function App() {
           }
           setShowSearch(false)
         }}
+      />
+      <SettingsPanel 
+        isOpen={showSettings}
+        onOpenChange={setShowSettings}
+        userEmail={currentUser?.email || ''}
+        onSignOut={handleSignOut}
+        onResetApp={handleResetApp}
+      />
+      <ImportManager 
+        isOpen={showImport}
+        onOpenChange={setShowImport}
       />
     </div>
   );

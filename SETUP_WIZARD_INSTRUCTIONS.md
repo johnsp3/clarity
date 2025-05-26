@@ -15,18 +15,18 @@ Copy and paste your Firebase configuration exactly as shown below:
 ```json
 {
   "apiKey": "your-firebase-api-key-here",
-  "authDomain": "modernnote-212cb.firebaseapp.com",
-  "projectId": "modernnote-212cb",
-  "storageBucket": "modernnote-212cb.firebasestorage.app",
-  "messagingSenderId": "856354180131",
-  "appId": "1:856354180131:web:c6c499f2e31dafe46cb596"
+  "authDomain": "your-project.firebaseapp.com",
+  "projectId": "your-project-id",
+  "storageBucket": "your-project.firebasestorage.app",
+  "messagingSenderId": "your-sender-id",
+  "appId": "your-app-id"
 }
 ```
 
 ### Step 3 - Email Authorization
 Enter your authorized email:
 ```
-jchezik@gmail.com
+your-email@gmail.com
 ```
 
 ### Step 4 - Security Rules

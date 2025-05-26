@@ -47,7 +47,7 @@
    ```json
    {
      "apiKey": "your-firebase-api-key-here",
-     "authDomain": "modernnote-212cb.firebaseapp.com",
+     "authDomain": "your-project.firebaseapp.com",
      ...
    }
    ```

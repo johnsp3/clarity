@@ -9,12 +9,9 @@ import Underline from '@tiptap/extension-underline';
 import TextAlign from '@tiptap/extension-text-align';
 import Color from '@tiptap/extension-color';
 import TextStyle from '@tiptap/extension-text-style';
-import { detectTextFormatAI } from '../utils/chatgpt-editor';
-
 export const useNoteEditor = (
   content: string, 
-  onChange: (content: string) => void,
-  onFormatDetected?: (format: string) => void
+  onChange: (content: string) => void
 ) => {
   return useEditor({
     extensions: [
@@ -52,28 +49,8 @@ export const useNoteEditor = (
       attributes: {
         class: 'prose prose-sm max-w-none focus:outline-none min-h-full px-8 py-6',
       },
-      handlePaste: (_view, event, _slice) => {
-        // Detect format from clipboard data using ChatGPT exclusively
-        if (event.clipboardData && onFormatDetected) {
-          // Get the plain text content for immediate detection
-          const plainText = event.clipboardData.getData('text/plain');
-          
-          // Use ChatGPT for paste format detection
-          if (plainText && plainText.trim()) {
-            console.log('🔍 Paste detected, analyzing with ChatGPT:', plainText.substring(0, 100) + '...');
-            detectTextFormatAI(plainText)
-              .then(result => {
-                console.log('🎯 Paste ChatGPT detection result:', result);
-                onFormatDetected(result.format);
-              })
-              .catch(error => {
-                console.error('❌ ChatGPT format detection failed on paste:', error);
-                // Fallback to plain text
-                onFormatDetected('plain');
-              });
-          }
-        }
-        
+      handlePaste: (_view, _event, _slice) => {
+        // No automatic format detection on paste - content displays exactly as pasted
         // Let Tiptap handle the paste normally
         return false;
       },

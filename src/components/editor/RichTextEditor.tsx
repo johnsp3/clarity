@@ -13,7 +13,7 @@ import { StatusBar } from './StatusBar'
 import { ContentPreview } from './ContentPreview'
 import { NoteTagEditor } from '../NoteTagEditor'
 import { calculateReadingTime } from '../../utils/format-detector'
-import { detectFormatOnChange } from '../../utils/chatgpt-editor'
+
 import { ContentFormat } from '../../types/editor'
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu'
 import { PrintPreview } from './PrintPreview'
@@ -40,7 +40,7 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({ note, onUpdate, 
   const [showPrintPreview, setShowPrintPreview] = useState(false)
   const [wordCount, setWordCount] = useState(0)
   const [charCount, setCharCount] = useState(0)
-  const [aiDetectionConfidence, setAiDetectionConfidence] = useState<'high' | 'medium' | 'low'>('medium')
+
   const previewContentRef = useRef<string>('')
 
   // Initialize Tiptap editor
@@ -56,16 +56,6 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({ note, onUpdate, 
         setIsSaving(false)
         setLastSaved(new Date())
       }, 500)
-    },
-    (format) => {
-      // Handle format detection from clipboard paste
-      setDetectedFormat(format as ContentFormat)
-      setShowFormatBadge(true)
-      
-      // Hide the badge after a few seconds
-      setTimeout(() => {
-        setShowFormatBadge(false)
-      }, 4000)
     }
   )
 
@@ -79,55 +69,26 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({ note, onUpdate, 
     }
   }, [note.id, note.title, note.content, editor, content])
 
-  // ChatGPT-powered format detection
+  // Calculate stats only (no automatic format detection)
   useEffect(() => {
-    if (!content || !content.trim()) {
-      setDetectedFormat('plain')
-      return
-    }
-    
-    // Use ChatGPT for format detection exclusively
-    const detectFormat = async () => {
-      try {
-        console.log('🔍 ChatGPT format detection for content length:', content.length)
-        
-        const result = await detectFormatOnChange(content)
-        console.log('📝 ChatGPT detection result:', result)
-        
-        setDetectedFormat(result.format as ContentFormat)
-        setAiDetectionConfidence(result.confidence)
-        
-        // Show format badge when format is detected
-        setShowFormatBadge(true)
-        
-        // Automatically show preview for structured formats
-        if (['markdown', 'html', 'json', 'xml'].includes(result.format)) {
-          setShowPreview(true)
-        }
-        
-        // Hide badge after showing it
-        setTimeout(() => {
-          setShowFormatBadge(false)
-        }, 3000)
-      } catch (error) {
-        console.error('❌ ChatGPT format detection failed:', error)
-        setDetectedFormat('plain')
-        setAiDetectionConfidence('low')
-      }
-    }
-    
-    // Immediate detection for better UX
-    const timeoutId = setTimeout(detectFormat, 500)
-    
     // Calculate stats using the raw content for accurate word count
     const plainTextForStats = editor ? editor.getText() : content.replace(/<[^>]*>/g, '')
     const words = plainTextForStats.trim().split(/\s+/).filter(word => word.length > 0).length
     const chars = plainTextForStats.length
     setWordCount(words)
     setCharCount(chars)
-    
-    return () => clearTimeout(timeoutId)
   }, [content, editor])
+
+  // Function to manually set format after AI conversion
+  const setFormatAfterConversion = (format: ContentFormat) => {
+    setDetectedFormat(format)
+    setShowFormatBadge(true)
+    
+    // Hide badge after showing it
+    setTimeout(() => {
+      setShowFormatBadge(false)
+    }, 3000)
+  }
 
   const handleTitleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newTitle = e.target.value
@@ -580,17 +541,16 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({ note, onUpdate, 
 
             <div className="w-px h-6 bg-gray-200 mx-1" />
 
-            {/* Format Info with Detection Status */}
-            <div className="px-3 py-1 rounded bg-gray-50 text-sm text-gray-600 flex items-center gap-2">
-              <span>Format: <span className="font-medium">{getFormatDisplayName(detectedFormat)}</span></span>
-              <div className="flex items-center gap-1">
-                <div className={`w-2 h-2 rounded-full ${
-                  aiDetectionConfidence === 'high' ? 'bg-green-500' : 
-                  aiDetectionConfidence === 'medium' ? 'bg-yellow-500' : 'bg-gray-400'
-                }`}></div>
-                <span className="text-xs text-gray-500">ChatGPT</span>
+            {/* Format Info - Only shown after conversion */}
+            {detectedFormat !== 'plain' && (
+              <div className="px-3 py-1 rounded bg-gray-50 text-sm text-gray-600 flex items-center gap-2">
+                <span>Format: <span className="font-medium">{getFormatDisplayName(detectedFormat)}</span></span>
+                <div className="flex items-center gap-1">
+                  <div className="w-2 h-2 rounded-full bg-green-500"></div>
+                  <span className="text-xs text-gray-500">Converted</span>
+                </div>
               </div>
-            </div>
+            )}
           </div>
 
           {/* Right Actions */}
@@ -693,11 +653,15 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({ note, onUpdate, 
             {/* AI Edit */}
             <AIEdit 
               content={content}
-              onRewrite={(newContent) => {
+              onRewrite={(newContent, format) => {
                 setContent(newContent)
                 onUpdate({ content: newContent })
                 if (editor) {
                   editor.commands.setContent(newContent)
+                }
+                // Set format after conversion if provided
+                if (format) {
+                  setFormatAfterConversion(format as ContentFormat)
                 }
               }}
             />

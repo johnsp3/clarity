@@ -18,7 +18,7 @@ import {
 
 interface AIEditProps {
   content: string
-  onRewrite: (newContent: string) => void
+  onRewrite: (newContent: string, format?: string) => void
 }
 
 interface MenuItem {
@@ -87,7 +87,20 @@ export const AIEdit: React.FC<AIEditProps> = ({ content, onRewrite }) => {
       }
 
       if (result.success && result.content) {
-        onRewrite(result.content)
+        // Detect format from custom prompt for format labeling
+        let detectedFormat: string | undefined
+        if (custom && custom.trim()) {
+          const prompt = custom.toLowerCase()
+          if (prompt.includes('markdown')) detectedFormat = 'markdown'
+          else if (prompt.includes('html')) detectedFormat = 'html'
+          else if (prompt.includes('json')) detectedFormat = 'json'
+          else if (prompt.includes('xml')) detectedFormat = 'xml'
+          else if (prompt.includes('plain text') || prompt.includes('text')) detectedFormat = 'plain'
+          else if (prompt.includes('rtf')) detectedFormat = 'rtf'
+          else if (prompt.includes('docx') || prompt.includes('word')) detectedFormat = 'docx'
+        }
+        
+        onRewrite(result.content, detectedFormat)
         
         // Save custom prompt to recent
         if (custom && custom.trim()) {
@@ -97,8 +110,8 @@ export const AIEdit: React.FC<AIEditProps> = ({ content, onRewrite }) => {
         }
         
         // For markdown conversion, show a success message
-        if (transformation === 'markdown') {
-          console.log('✅ Markdown conversion completed. Content should now display with proper formatting.')
+        if (transformation === 'markdown' || detectedFormat === 'markdown') {
+          console.log('✅ Format conversion completed. Content should now display with proper formatting.')
         }
       } else {
         alert(`Error: ${result.error || 'Unknown error occurred'}`)

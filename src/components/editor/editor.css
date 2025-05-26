@@ -1,0 +1,92 @@
+/* Tiptap Editor Styles */
+.ProseMirror {
+  @apply min-h-full focus:outline-none px-8 py-6;
+}
+
+.ProseMirror p {
+  @apply mb-4;
+}
+
+.ProseMirror h1 {
+  @apply text-2xl font-semibold mb-4;
+}
+
+.ProseMirror h2 {
+  @apply text-xl font-semibold mb-3;
+}
+
+.ProseMirror h3 {
+  @apply text-lg font-medium mb-2;
+}
+
+.ProseMirror ul {
+  @apply mb-4 ml-6;
+  list-style-type: disc;
+  padding-left: 1.5rem;
+}
+
+.ProseMirror ol {
+  @apply mb-4 ml-6;
+  list-style-type: decimal;
+  padding-left: 1.5rem;
+}
+
+.ProseMirror li {
+  @apply mb-1;
+  display: list-item;
+}
+
+.ProseMirror li p {
+  @apply mb-1;
+}
+
+.ProseMirror li > p:last-child {
+  @apply mb-0;
+}
+
+.ProseMirror code {
+  @apply bg-gray-100 dark:bg-gray-800 px-1.5 py-0.5 rounded text-sm font-mono;
+}
+
+.ProseMirror pre {
+  @apply bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded p-4 mb-4 overflow-x-auto;
+}
+
+.ProseMirror pre code {
+  @apply bg-transparent p-0;
+}
+
+.ProseMirror a {
+  @apply text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 underline transition-colors duration-150;
+}
+
+.ProseMirror p.is-editor-empty:first-child::before {
+  @apply text-gray-400 dark:text-gray-600;
+  content: attr(data-placeholder);
+  float: left;
+  height: 0;
+  pointer-events: none;
+}
+
+/* Focus styles */
+.ProseMirror:focus {
+  @apply outline-none;
+}
+
+/* Task list styles */
+.ProseMirror ul[data-type="taskList"] {
+  @apply list-none ml-0 pl-0;
+}
+
+.ProseMirror ul[data-type="taskList"] li {
+  @apply flex items-start mb-2;
+  list-style: none;
+}
+
+.ProseMirror ul[data-type="taskList"] li > label {
+  @apply flex items-center mr-2;
+}
+
+.ProseMirror ul[data-type="taskList"] li > label > input {
+  @apply mr-2;
+} 

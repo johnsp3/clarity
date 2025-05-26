@@ -1,0 +1,252 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Enterprise Design System 2025 */
+:root {
+  /* Primary Palette - NO GRADIENTS */
+  --bg-primary: #FFFFFF;
+  --bg-secondary: #FAFAFA;
+  --bg-tertiary: #F5F5F5;
+  --bg-hover: #F0F0F0;
+  --bg-active: #E8E8E8;
+  
+  /* Borders - Clean & Minimal */
+  --border-primary: #E5E5E7;
+  --border-secondary: #D1D1D3;
+  --border-active: #0F62FE;
+  
+  /* Text Hierarchy */
+  --text-primary: #1A1A1A;
+  --text-secondary: #6B6B6B;
+  --text-tertiary: #9B9B9B;
+  --text-inverse: #FFFFFF;
+  
+  /* Accent Colors - Use SPARINGLY */
+  --accent-primary: #0F62FE; /* IBM Blue */
+  --accent-hover: #0043CE;
+  --accent-light: #E5F0FF;
+  --accent-text: #0F62FE;
+  
+  /* Status Colors - Semantic Only */
+  --success: #24A148;
+  --success-bg: #E5F6EC;
+  --warning: #F1C232;
+  --warning-bg: #FFF8E1;
+  --error: #DA1E28;
+  --error-bg: #FFEBEE;
+  
+  /* Professional Shadows - Subtle */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 2px 4px rgba(0, 0, 0, 0.06);
+  --shadow-lg: 0 4px 6px rgba(0, 0, 0, 0.07);
+  --shadow-xl: 0 8px 16px rgba(0, 0, 0, 0.08);
+  
+  /* Layout Dimensions */
+  --sidebar-width: 240px;
+  --notelist-width: 320px;
+  --toolbar-height: 48px;
+  --statusbar-height: 32px;
+  
+  /* Professional Transitions */
+  --transition-fast: 150ms;
+  --transition-normal: 200ms;
+  
+  /* Border Radius - Minimal */
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 8px;
+}
+
+/* Enterprise Base Styles */
+@layer base {
+  * {
+    @apply antialiased;
+  }
+
+  body {
+    @apply bg-white text-[#1A1A1A];
+    font-family: Inter, -apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif;
+    font-size: 14px;
+    line-height: 1.5;
+  }
+
+  /* Professional Scrollbar */
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: #D1D1D3;
+    border-radius: 4px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: #B8B8BA;
+  }
+  
+  /* Selection */
+  ::selection {
+    background-color: var(--accent-light);
+    color: var(--text-primary);
+  }
+}
+
+@layer components {
+  /* Enterprise Button System */
+  .btn-primary {
+    @apply px-4 py-2 bg-[#0F62FE] text-white font-medium rounded-md
+           hover:bg-[#0043CE] active:bg-[#002C9C]
+           transition-colors duration-150 text-sm;
+  }
+  
+  .btn-secondary {
+    @apply px-4 py-2 bg-white text-[#1A1A1A] font-medium rounded-md
+           border border-[#E5E5E7] hover:bg-[#FAFAFA] active:bg-[#F0F0F0]
+           transition-colors duration-150 text-sm;
+  }
+  
+  .btn-ghost {
+    @apply px-3 py-1.5 text-[#6B6B6B] font-medium rounded
+           hover:bg-[#F0F0F0] active:bg-[#E8E8E8]
+           transition-colors duration-150 text-sm;
+  }
+  
+  .btn-icon {
+    @apply w-8 h-8 flex items-center justify-center rounded
+           text-[#6B6B6B] hover:bg-[#F0F0F0] active:bg-[#E8E8E8]
+           transition-colors duration-150;
+  }
+
+  /* Professional Input Styles */
+  .input-enterprise {
+    @apply w-full px-3 py-2 bg-white rounded-md text-sm
+           border border-[#E5E5E7] 
+           focus:border-[#0F62FE] focus:outline-none focus:ring-1 focus:ring-[#0F62FE]
+           transition-all duration-150 placeholder-[#9B9B9B];
+  }
+  
+  /* Typography System */
+  .text-heading-lg {
+    @apply text-xl font-semibold text-[#1A1A1A] leading-tight;
+  }
+  
+  .text-heading-md {
+    @apply text-base font-semibold text-[#1A1A1A] leading-tight;
+  }
+  
+  .text-heading-sm {
+    @apply text-sm font-semibold text-[#1A1A1A] leading-tight;
+  }
+  
+  .text-body {
+    @apply text-sm text-[#1A1A1A] leading-relaxed;
+  }
+  
+  .text-body-secondary {
+    @apply text-sm text-[#6B6B6B] leading-relaxed;
+  }
+  
+  .text-caption {
+    @apply text-xs text-[#9B9B9B];
+  }
+  
+  /* Enterprise Card */
+  .card-enterprise {
+    @apply bg-white rounded-md border border-[#E5E5E7]
+           hover:border-[#D1D1D3] transition-all duration-150;
+  }
+  
+  /* Toolbar Item */
+  .toolbar-item {
+    @apply px-2 py-1 rounded text-[#6B6B6B] text-sm
+           hover:bg-[#F0F0F0] active:bg-[#E8E8E8]
+           transition-colors duration-150 cursor-pointer
+           flex items-center gap-2;
+  }
+  
+  .toolbar-item-active {
+    @apply text-[#0F62FE] bg-[#E5F0FF];
+  }
+  
+  /* Note Card */
+  .note-card {
+    @apply px-4 py-3 bg-white border-b border-[#E5E5E7] cursor-pointer
+           hover:bg-[#FAFAFA] transition-colors duration-150;
+  }
+  
+  .note-card-active {
+    @apply bg-white border-l-2 border-l-[#0F62FE] hover:bg-white;
+  }
+  
+  /* Status Badge */
+  .badge {
+    @apply inline-flex items-center px-2 py-0.5 rounded text-xs font-medium;
+  }
+  
+  .badge-success {
+    @apply bg-[#E5F6EC] text-[#24A148];
+  }
+  
+  .badge-warning {
+    @apply bg-[#FFF8E1] text-[#A57F00];
+  }
+  
+  .badge-error {
+    @apply bg-[#FFEBEE] text-[#DA1E28];
+  }
+  
+  .badge-info {
+    @apply bg-[#E5F0FF] text-[#0F62FE];
+  }
+  
+  /* Divider */
+  .divider-horizontal {
+    @apply h-px bg-[#E5E5E7] my-2;
+  }
+  
+  .divider-vertical {
+    @apply w-px bg-[#E5E5E7] mx-2 h-4;
+  }
+}
+
+@layer utilities {
+  /* Density Classes */
+  .density-comfortable {
+    --spacing-unit: 1rem;
+  }
+  
+  .density-compact {
+    --spacing-unit: 0.75rem;
+  }
+  
+  .density-dense {
+    --spacing-unit: 0.5rem;
+  }
+  
+  /* Professional Focus States */
+  .focus-visible-enterprise {
+    @apply focus-visible:outline-none focus-visible:ring-2 
+           focus-visible:ring-[#0F62FE] focus-visible:ring-offset-2;
+  }
+  
+  /* Z-index System */
+  .z-base { z-index: 0; }
+  .z-dropdown { z-index: 10; }
+  .z-sticky { z-index: 20; }
+  .z-fixed { z-index: 30; }
+  .z-overlay { z-index: 50; }
+  .z-modal { z-index: 60; }
+  .z-popover { z-index: 70; }
+  .z-tooltip { z-index: 80; }
+  .z-notification { z-index: 90; }
+  
+  /* Remove all gradient utilities */
+  /* Remove all playful animations */
+  /* Keep only essential, subtle transitions */
+} 

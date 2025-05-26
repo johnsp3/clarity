@@ -13,7 +13,7 @@ import { ImportManager } from './components/ImportManager'
 
 import { useStore } from './store/useStore'
 import { onAuthStateChanged } from 'firebase/auth'
-import { Search, Download, Upload, Settings } from 'lucide-react'
+import { Search, Settings } from 'lucide-react'
 
 function App() {
   const [isConfigured, setIsConfigured] = useState(false);

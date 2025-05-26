@@ -4,7 +4,7 @@ import {
   List, Link2,
   FileText, FileDown, Eye, EyeOff,
   Save, Heading1, Heading2,
-  Printer, Upload, Download
+  Printer, Upload
 } from 'lucide-react'
 
 import { Note } from '../../store/useStore'
@@ -29,7 +29,7 @@ interface RichTextEditorProps {
   onExportNotes?: () => void
 }
 
-export const RichTextEditor: React.FC<RichTextEditorProps> = ({ note, onUpdate, onShowImport, onExportNotes }) => {
+export const RichTextEditor: React.FC<RichTextEditorProps> = ({ note, onUpdate, onShowImport }) => {
   const [title, setTitle] = useState(note.title)
   const [content, setContent] = useState(note.content)
   const [detectedFormat, setDetectedFormat] = useState<ContentFormat>('plain')
@@ -313,61 +313,7 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({ note, onUpdate, 
       markdown = `# ${title}\n\n`
     }
     
-    // Convert HTML elements to Markdown
-    const convertElement = (element: Element): string => {
-      const tagName = element.tagName.toLowerCase()
-      const textContent = element.textContent || ''
-      
-      switch (tagName) {
-        case 'h1':
-          return `# ${textContent}\n\n`
-        case 'h2':
-          return `## ${textContent}\n\n`
-        case 'h3':
-          return `### ${textContent}\n\n`
-        case 'h4':
-          return `#### ${textContent}\n\n`
-        case 'h5':
-          return `##### ${textContent}\n\n`
-        case 'h6':
-          return `###### ${textContent}\n\n`
-        case 'p':
-          return `${textContent}\n\n`
-        case 'strong':
-        case 'b':
-          return `**${textContent}**`
-        case 'em':
-        case 'i':
-          return `*${textContent}*`
-        case 'code':
-          return `\`${textContent}\``
-        case 'pre':
-          return `\`\`\`\n${textContent}\n\`\`\`\n\n`
-        case 'blockquote':
-          return `> ${textContent}\n\n`
-        case 'a':
-          const href = element.getAttribute('href') || '#'
-          return `[${textContent}](${href})`
-        case 'ul':
-          let ulResult = ''
-          Array.from(element.children).forEach(li => {
-            ulResult += `- ${li.textContent}\n`
-          })
-          return ulResult + '\n'
-        case 'ol':
-          let olResult = ''
-          Array.from(element.children).forEach((li, index) => {
-            olResult += `${index + 1}. ${li.textContent}\n`
-          })
-          return olResult + '\n'
-        case 'hr':
-          return '---\n\n'
-        case 'br':
-          return '\n'
-        default:
-          return textContent
-      }
-    }
+    // Convert HTML elements to Markdown (helper function - currently using extractMarkdownFromElement instead)
     
     // Track if we've seen the first heading to make it the main title
     let firstHeadingSeen = false

@@ -31,7 +31,7 @@ export const ContentPreview: React.FC<ContentPreviewProps> = ({
       return
     }
 
-    console.log('🎨 Preview rendering content:', JSON.stringify(content), 'as format:', format)
+    console.log('🎨 Preview rendering content:', JSON.stringify(content.substring(0, 100)), 'as format:', format)
 
     let renderedContent = ''
     
@@ -41,6 +41,10 @@ export const ContentPreview: React.FC<ContentPreviewProps> = ({
         try {
           console.log('📝 Parsing Markdown content:', content)
           renderedContent = marked(content) as string
+          
+          // Add image error handling and fallback placeholders
+          renderedContent = addImageErrorHandling(renderedContent)
+          
           console.log('✅ Markdown rendered to:', renderedContent.substring(0, 100) + '...')
         } catch (error) {
           console.error('Markdown parsing error:', error)
@@ -50,12 +54,12 @@ export const ContentPreview: React.FC<ContentPreviewProps> = ({
         
       case 'html':
         // For HTML, render it directly (it's already HTML)
-        renderedContent = content
+        renderedContent = addImageErrorHandling(content)
         break
         
       case 'rich':
         // Rich text is already formatted HTML
-        renderedContent = content
+        renderedContent = addImageErrorHandling(content)
         break
 
       case 'word':
@@ -627,7 +631,48 @@ function getPreviewStyles(): string {
     .prose ol ol ul {
       list-style-type: square;
     }
+    
+    /* Missing image placeholder styles */
+    .missing-image {
+      display: inline-block;
+      padding: 20px;
+      background-color: #F5F5F7;
+      border: 2px dashed #D2D2D7;
+      border-radius: 8px;
+      color: #86868B;
+      text-align: center;
+      font-style: italic;
+      margin: 20px 0;
+      max-width: 100%;
+    }
+    
+    .missing-image svg {
+      color: #86868B;
+    }
   `
+}
+
+// Helper function to add image error handling and fallback placeholders
+function addImageErrorHandling(html: string): string {
+  // Replace img tags with error handling
+  return html.replace(/<img([^>]*)src="([^"]*)"([^>]*)>/g, (match, beforeSrc, src, afterSrc) => {
+    // Extract alt text if present
+    const altMatch = match.match(/alt="([^"]*)"/)
+    const altText = altMatch ? altMatch[1] : 'Image'
+    
+    // Create a more robust image tag with error handling
+    return `<img${beforeSrc}src="${src}"${afterSrc} onerror="this.style.display='none'; this.nextElementSibling.style.display='inline-block';" />
+<div class="missing-image" style="display: none;">
+  <div style="display: flex; align-items: center; gap: 8px;">
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+      <circle cx="8.5" cy="8.5" r="1.5"/>
+      <polyline points="21,15 16,10 5,21"/>
+    </svg>
+    <span>${altText || 'Missing Image'}</span>
+  </div>
+</div>`
+  })
 }
 
 // Helper function to escape HTML

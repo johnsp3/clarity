@@ -10,10 +10,10 @@ import { CommandPalette } from './components/CommandPalette'
 import { SearchPanel } from './components/SearchPanel'
 import { SettingsPanel } from './components/SettingsPanel'
 import { ImportManager } from './components/ImportManager'
+
 import { useStore } from './store/useStore'
 import { onAuthStateChanged } from 'firebase/auth'
-import { Search, MoreHorizontal, Download, Upload, Settings } from 'lucide-react'
-import * as DropdownMenu from '@radix-ui/react-dropdown-menu'
+import { Search, Download, Upload, Settings } from 'lucide-react'
 
 function App() {
   const [isConfigured, setIsConfigured] = useState(false);
@@ -24,6 +24,8 @@ function App() {
   const [showSearch, setShowSearch] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [showImport, setShowImport] = useState(false);
+
+
   const loadDataFromFirebase = useStore(state => state.loadDataFromFirebase);
   const isLoadingData = useStore(state => state.isLoading);
   const updateNote = useStore(state => state.updateNote);
@@ -229,7 +231,17 @@ function App() {
             </button>
           </div>
           
-          <div className="flex items-center gap-6">
+          <div className="flex items-center gap-3">
+            
+            {/* Settings Button */}
+            <button
+              onClick={() => setShowSettings(true)}
+              className="btn-apple-icon"
+              title="Settings"
+            >
+              <Settings size={16} />
+            </button>
+            
             {/* Create Button */}
             <button
               onClick={handleCreateNote}
@@ -237,51 +249,15 @@ function App() {
             >
               Create
             </button>
-            
-            {/* Tools Menu */}
-            <DropdownMenu.Root>
-              <DropdownMenu.Trigger asChild>
-                <button className="menu-button-apple">
-                  <MoreHorizontal size={16} />
-                  Tools
-                </button>
-              </DropdownMenu.Trigger>
-              <DropdownMenu.Portal>
-                <DropdownMenu.Content
-                  className="dropdown-apple min-w-[200px] z-apple-dropdown animate-apple-scale-in"
-                  sideOffset={5}
-                >
-                  <DropdownMenu.Item 
-                    onClick={() => setShowImport(true)}
-                    className="dropdown-item-apple"
-                  >
-                    <Upload size={16} className="text-[#86868B]" />
-                    Import Notes
-                  </DropdownMenu.Item>
-                  <DropdownMenu.Item 
-                    onClick={handleExportNotes}
-                    className="dropdown-item-apple"
-                  >
-                    <Download size={16} className="text-[#86868B]" />
-                    Export Notes
-                  </DropdownMenu.Item>
-                  <DropdownMenu.Separator className="divider-apple my-1" />
-                  <DropdownMenu.Item 
-                    onClick={() => setShowSettings(true)}
-                    className="dropdown-item-apple"
-                  >
-                    <Settings size={16} className="text-[#86868B]" />
-                    Settings
-                  </DropdownMenu.Item>
-                </DropdownMenu.Content>
-              </DropdownMenu.Portal>
-            </DropdownMenu.Root>
           </div>
         </div>
         
         {/* Editor content */}
         <div className="flex-1">
-          <Editor />
+          <Editor 
+            onShowImport={() => setShowImport(true)}
+            onExportNotes={handleExportNotes}
+          />
         </div>
       </div>
       <CommandPalette />

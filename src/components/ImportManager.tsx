@@ -44,6 +44,8 @@ export const ImportManager: React.FC<ImportManagerProps> = ({
   const isOpen = externalIsOpen !== undefined ? externalIsOpen : internalIsOpen
   const setIsOpen = externalOnOpenChange || setInternalIsOpen
 
+
+
   // Reset state when modal closes
   useEffect(() => {
     if (!isOpen) {
@@ -317,9 +319,12 @@ export const ImportManager: React.FC<ImportManagerProps> = ({
 
         <Dialog.Root open={isOpen} onOpenChange={setIsOpen}>
           <Dialog.Portal>
-            <Dialog.Overlay className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[100]" />
-            <Dialog.Content className="fixed top-[50%] left-[50%] transform -translate-x-1/2 -translate-y-1/2 
-                                     bg-white rounded-lg shadow-2xl w-full max-w-2xl z-[101]">
+            <Dialog.Overlay className="fixed inset-0 bg-black/60 backdrop-blur-sm" style={{ zIndex: 10000 }} />
+            <Dialog.Content 
+              className="fixed top-[50%] left-[50%] transform -translate-x-1/2 -translate-y-1/2 
+                         bg-white rounded-lg shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto"
+              style={{ zIndex: 10001 }}
+            >
               {/* Modal content here */}
               {/* ... rest of the modal content ... */}
             </Dialog.Content>
@@ -333,13 +338,26 @@ export const ImportManager: React.FC<ImportManagerProps> = ({
   return (
     <Dialog.Root open={isOpen} onOpenChange={setIsOpen}>
       <Dialog.Portal>
-        <Dialog.Overlay className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[100]" />
-        <Dialog.Content className="fixed top-[50%] left-[50%] transform -translate-x-1/2 -translate-y-1/2 
-                                 bg-white rounded-lg shadow-2xl w-full max-w-2xl z-[101]">
+        <Dialog.Overlay className="fixed inset-0 bg-black/60 backdrop-blur-sm" style={{ zIndex: 10000 }} />
+        <Dialog.Content 
+          className="fixed top-[50%] left-[50%] transform -translate-x-1/2 -translate-y-1/2 
+                     bg-white rounded-lg shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto"
+          style={{ zIndex: 10001 }}
+        >
           {/* Modal Header */}
-          <div className="px-6 py-4 border-b border-[#D2D2D7]">
-            <h2 className="text-apple-title-sm">Import Notes</h2>
-            <p className="text-apple-caption mt-1">Import notes from Markdown, HTML, or text files</p>
+          <div className="px-6 py-4 border-b border-[#D2D2D7] bg-white">
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="text-apple-title-sm">Import Notes</h2>
+                <p className="text-apple-caption mt-1">Import notes from Markdown, HTML, or text files</p>
+              </div>
+              <button 
+                onClick={handleClose}
+                className="p-2 hover:bg-[#F5F5F7] rounded-lg transition-all duration-200"
+              >
+                <X className="w-5 h-5 text-[#86868B]" />
+              </button>
+            </div>
           </div>
 
           {/* Modal Content */}

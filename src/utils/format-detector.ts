@@ -173,11 +173,28 @@ function isMarkdownFormat(content: string): boolean {
     /~~[^~\n]+~~/,              // Strikethrough
     /^\s*\|.+\|.*$/m,           // Tables
     /^\s*-+\s*\|\s*-+/m,        // Table separators
-    /\[[xX\s]\]/,               // Task lists
+    /^\s*-\s*\[[xX\s]\]\s+.+$/m, // Task lists (more specific pattern)
+    /\[[xX\s]\]/,               // Task list checkboxes
   ]
 
+  // Strong markdown indicators that should immediately return true
+  const strongIndicators = [
+    /^#{1,6}\s+.+$/m,           // Headers
+    /^\s*-\s*\[[xX\s]\]\s+.+$/m, // Task lists
+    /```[\s\S]*?```/,           // Code blocks
+    /^\s*\|.+\|.*$/m,           // Tables
+  ]
+
+  // Check for strong indicators first
+  const hasStrongIndicator = strongIndicators.some(pattern => pattern.test(content))
+  if (hasStrongIndicator) {
+    console.log('🎯 Strong markdown indicator found, returning markdown format')
+    return true
+  }
+
   // Exclude content that has bullet points (•) which are not markdown
-  if (content.includes('•')) {
+  // BUT allow it if we have other strong markdown indicators
+  if (content.includes('•') && !hasStrongIndicator) {
     // If it has bullet points, it's likely formatted text, not markdown
     return false
   }
@@ -188,16 +205,23 @@ function isMarkdownFormat(content: string): boolean {
   const hasMarkdownStructure = /^#\s+.+(\n|$)/.test(content) || // Title at start
                                content.split('\n').some(line => /^#{1,6}\s/.test(line)) // Any header
 
-  // Special case: if content starts with a header (like "# OverKill"), it's very likely Markdown
+  // Special case: if content starts with a header, it's very likely Markdown
   const startsWithHeader = /^#{1,6}\s+.+/.test(content.trim())
   
   // More lenient detection - if it starts with a header, that's a strong indicator
   if (startsWithHeader) {
+    console.log('🎯 Content starts with header, returning markdown format')
     return true
   }
   
-  // Require lower threshold for markdown detection
-  return markdownScore >= 2 || (markdownScore >= 1 && hasMarkdownStructure)
+  // More aggressive detection for markdown
+  const isMarkdown = markdownScore >= 1 || hasMarkdownStructure
+  
+  if (isMarkdown) {
+    console.log('🎯 Markdown patterns detected:', markdownScore, 'structure:', hasMarkdownStructure)
+  }
+  
+  return isMarkdown
 }
 
 /**

@@ -1,5 +1,4 @@
 import { getOpenAIClient } from './openai-client'
-import { detectContentFormat } from './format-detector'
 
 export interface TransformationResult {
   success: boolean
@@ -86,10 +85,14 @@ export const detectTextFormatAI = async (content: string): Promise<FormatDetecti
   try {
     const openai = getOpenAIClient()
     if (!openai) {
-      // Fallback to local detection
-      const format = detectContentFormat(content)
-      return { format, confidence: 'medium' }
+      console.log('⚠️ OpenAI client not available for format detection')
+      return { format: 'plain', confidence: 'low' }
     }
+    
+    // Optimize content for analysis - take first 2000 chars for speed
+    const analysisContent = content.substring(0, 2000)
+    
+    console.log('🤖 ChatGPT analyzing content for format detection...')
     
     const response = await openai.chat.completions.create({
       model: 'gpt-3.5-turbo',
@@ -100,33 +103,36 @@ export const detectTextFormatAI = async (content: string): Promise<FormatDetecti
 
 Respond with ONLY a JSON object in this exact format:
 {
-  "format": "one_word_format",
-  "confidence": "high|medium|low",
-  "reasoning": "brief explanation"
+  "format": "format_name",
+  "confidence": "high|medium|low"
 }
 
-Valid formats are:
-- "markdown" - for Markdown syntax (headers with #, **bold**, *italic*, lists with -, etc.)
-- "html" - for HTML tags and markup
-- "code" - for programming code (functions, variables, syntax)
-- "json" - for JSON data structures
-- "xml" - for XML markup
-- "csv" - for comma-separated values
-- "rich" - for rich text with formatting
+Valid formats:
+- "markdown" - for Markdown syntax (headers with #, **bold**, *italic*, lists with -, links [text](url), code blocks \`\`\`, etc.)
+- "html" - for HTML tags and markup (<div>, <p>, <h1>, etc.)
+- "code" - for programming code (functions, variables, syntax highlighting)
+- "json" - for JSON data structures with curly braces and key-value pairs
+- "xml" - for XML markup with angle brackets and structured tags
+- "csv" - for comma-separated values or tabular data
+- "rich" - for rich text with inline formatting
 - "word" - for Microsoft Word formatted content
 - "rtf" - for Rich Text Format
 - "plain" - for plain text without special formatting
 
-Pay special attention to:
-- Content starting with # followed by space and text = markdown header
+Key detection rules:
+- Content starting with # followed by space = markdown header (HIGH confidence)
 - Content with HTML tags like <p>, <div>, <h1> = html
-- Content with programming syntax = code
-- Content with curly braces and key-value pairs = json`
+- Content with programming syntax, functions, variables = code
+- Content with {key: value} structure = json
+- Content with <tag>content</tag> structure = xml
+- Content with commas separating values in rows = csv
+
+Be decisive and confident in your detection.`
         },
-        { role: 'user', content: content.substring(0, 1000) } // Limit content for speed
+        { role: 'user', content: analysisContent }
       ],
       temperature: 0,
-      max_tokens: 100
+      max_tokens: 50
     })
     
     try {
@@ -134,18 +140,22 @@ Pay special attention to:
       const validFormats = ['markdown', 'html', 'code', 'json', 'xml', 'csv', 'rich', 'word', 'rtf', 'plain']
       const format = validFormats.includes(result.format) ? result.format : 'plain'
       
+      console.log('🎯 ChatGPT format detection result:', { format, confidence: result.confidence })
+      
       return {
         format,
-        confidence: result.confidence || 'high',
-        reasoning: result.reasoning
+        confidence: result.confidence || 'high'
       }
-    } catch {
-      // If JSON parsing fails, try simple format extraction
+    } catch (parseError) {
+      console.error('❌ Failed to parse ChatGPT response:', parseError)
+      
+      // Try simple format extraction from response text
       const responseText = response.choices[0].message.content?.toLowerCase() || ''
-      const validFormats = ['markdown', 'html', 'code', 'json', 'xml', 'csv', 'rich', 'word', 'rtf', 'plain']
+      const validFormats = ['markdown', 'html', 'code', 'json', 'xml', 'csv', 'rich', 'word', 'rtf']
       
       for (const format of validFormats) {
         if (responseText.includes(format)) {
+          console.log('🔍 Extracted format from response text:', format)
           return { format, confidence: 'medium' }
         }
       }
@@ -153,43 +163,30 @@ Pay special attention to:
       return { format: 'plain', confidence: 'low' }
     }
   } catch (error) {
-    console.error('AI format detection error:', error)
-    // Fallback to local detection
-    const format = detectContentFormat(content)
-    return { format, confidence: 'low' }
+    console.error('❌ ChatGPT format detection error:', error)
+    return { format: 'plain', confidence: 'low' }
   }
 }
 
-// Real-time format detection for content changes
+// Real-time format detection for content changes - now uses ChatGPT exclusively
 export const detectFormatOnChange = async (content: string): Promise<FormatDetectionResult> => {
   try {
-    console.log('🔍 AI Format Detection - Analyzing content:', JSON.stringify(content));
+    console.log('🔍 Real-time format detection triggered for content length:', content.length)
     
-    // For very short content, use local detection for speed
-    if (content.trim().length < 10) {
-      const format = detectContentFormat(content)
-      console.log('📝 Short content detected as:', format);
-      return { format, confidence: 'medium' }
+    // For very short content, return plain text immediately
+    if (content.trim().length < 5) {
+      console.log('📝 Content too short, returning plain text')
+      return { format: 'plain', confidence: 'high' }
     }
     
-    // Check if OpenAI client is available before trying AI detection
-    const openai = getOpenAIClient()
-    if (!openai) {
-      console.log('⚠️ OpenAI client not available, using local detection');
-      const format = detectContentFormat(content)
-      return { format, confidence: 'medium' }
-    }
-    
-    // For longer content, use AI detection
-    console.log('🤖 Using AI detection for longer content...');
-    const result = await detectTextFormatAI(content);
-    console.log('🎯 AI detection result:', result);
-    return result;
+    // Use ChatGPT for all format detection
+    console.log('🤖 Using ChatGPT for real-time format detection...')
+    const result = await detectTextFormatAI(content)
+    console.log('🎯 Real-time detection result:', result)
+    return result
   } catch (error) {
-    console.error('❌ Error in detectFormatOnChange:', error);
-    // Always fallback to local detection
-    const format = detectContentFormat(content)
-    return { format, confidence: 'low' }
+    console.error('❌ Error in real-time format detection:', error)
+    return { format: 'plain', confidence: 'low' }
   }
 }
 

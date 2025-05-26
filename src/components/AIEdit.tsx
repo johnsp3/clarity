@@ -8,9 +8,6 @@ import {
   Briefcase,
   Scissors,
   CheckCircle,
-  Hash,
-  Code,
-  FileText,
   Edit3,
   Zap,
   List,
@@ -29,7 +26,7 @@ interface MenuItem {
   label: string
   icon: React.ComponentType<any>
   emoji?: string
-  category?: 'tone' | 'format' | 'enhance' | 'custom'
+  category?: 'tone' | 'enhance' | 'custom'
 }
 
 export const AIEdit: React.FC<AIEditProps> = ({ content, onRewrite }) => {
@@ -38,7 +35,7 @@ export const AIEdit: React.FC<AIEditProps> = ({ content, onRewrite }) => {
 
   const [customPrompt, setCustomPrompt] = useState('')
   const [recentPrompts, setRecentPrompts] = useState<string[]>([])
-  const [activeCategory, setActiveCategory] = useState<'tone' | 'format' | 'enhance' | 'custom'>('tone')
+  const [activeCategory, setActiveCategory] = useState<'tone' | 'enhance' | 'custom'>('tone')
   const dropdownRef = useRef<HTMLDivElement>(null)
 
   const isApiKeyConfigured = !!getOpenAIClient()
@@ -120,11 +117,6 @@ export const AIEdit: React.FC<AIEditProps> = ({ content, onRewrite }) => {
       { key: 'professional', label: 'Make it Professional', icon: Briefcase, emoji: '💼' },
       { key: 'grammar', label: 'Fix Grammar & Spelling', icon: CheckCircle, emoji: '✓' },
     ],
-    format: [
-      { key: 'markdown', label: 'Convert to Markdown', icon: Hash },
-      { key: 'html', label: 'Convert to HTML', icon: Code },
-      { key: 'plaintext', label: 'Convert to Plain Text', icon: FileText },
-    ],
     enhance: [
       { key: 'enhance_concise', label: 'Make it Concise', icon: Scissors, emoji: '✂️' },
       { key: 'enhance_expand', label: 'Expand with Details', icon: Zap, emoji: '⚡' },
@@ -137,7 +129,6 @@ export const AIEdit: React.FC<AIEditProps> = ({ content, onRewrite }) => {
 
   const categories = [
     { key: 'tone' as const, label: 'Tone & Style', icon: Smile },
-    { key: 'format' as const, label: 'Format', icon: Code },
     { key: 'enhance' as const, label: 'Enhance', icon: Zap },
     { key: 'custom' as const, label: 'Custom', icon: Edit3 },
   ]

@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react'
 import { detectTextFormatAI } from '../utils/chatgpt-editor'
-import { detectContentFormat } from '../utils/format-detector'
 import { 
   Hash, 
   Code, 
@@ -31,29 +30,31 @@ export const FormatBadge: React.FC<FormatBadgeProps> = ({ content, visible = tru
 
     const detectFormat = async () => {
       if (!content || content.length < 10) {
-        setFormat(null)
+        setFormat('plain')
         return
       }
 
       setIsDetecting(true)
       
       try {
-        // Try AI detection first, fallback to local detection
+        // Use ChatGPT API for format detection
+        console.log('🤖 FormatBadge: Using ChatGPT for format detection')
         const result = await detectTextFormatAI(content)
+        console.log('🎯 FormatBadge: ChatGPT detection result:', result)
         setFormat(result.format)
         setConfidence(result.confidence)
-      } catch {
-        // Fallback to local detection
-        const localFormat = detectContentFormat(content)
-        setFormat(localFormat)
-        setConfidence('medium')
+      } catch (error) {
+        console.error('❌ FormatBadge: ChatGPT detection failed:', error)
+        // Fallback to plain text if ChatGPT fails
+        setFormat('plain')
+        setConfidence('low')
       } finally {
         setIsDetecting(false)
       }
     }
 
-    // Debounce detection
-    const timer = setTimeout(detectFormat, 1000)
+    // Immediate detection for better UX
+    const timer = setTimeout(detectFormat, 500)
     return () => clearTimeout(timer)
   }, [content, providedFormat])
 

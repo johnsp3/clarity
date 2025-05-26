@@ -3,7 +3,7 @@ import {
   Plus, Grid, List as ListIcon, AlignLeft, SortDesc,
   Calendar, Edit2, Star, Check, X,
   FileText, Image, Code, Trash2, FolderInput,
-  Share2, Archive, Tag, MoreVertical
+  Share2, Tag, MoreVertical
 } from 'lucide-react'
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu'
 import * as Checkbox from '@radix-ui/react-checkbox'
@@ -159,10 +159,6 @@ export const EnhancedNoteList: React.FC = () => {
                       <DropdownMenu.Item className="dropdown-item-apple">
                         <FolderInput size={14} className="text-[#86868B]" />
                         Move to...
-                      </DropdownMenu.Item>
-                      <DropdownMenu.Item className="dropdown-item-apple">
-                        <Archive size={14} className="text-[#86868B]" />
-                        Archive
                       </DropdownMenu.Item>
                       <DropdownMenu.Separator className="divider-apple my-1" />
                       <DropdownMenu.Item 

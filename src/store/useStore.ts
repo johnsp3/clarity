@@ -82,6 +82,8 @@ interface StoreState {
   setCommandPaletteOpen: (open: boolean) => void
   setQuickAccessView: (view: 'all' | 'recent' | 'favorites') => void
   toggleFavorite: (noteId: string) => void
+  permanentlyDeleteNote: (noteId: string) => void
+  permanentlyDeleteNotes: (noteIds: string[]) => void
   
   // Computed
   filteredNotes: () => Note[]
@@ -477,6 +479,39 @@ export const useStore = create<StoreState>((set, get) => ({
       return { favoriteNoteIds: newFavorites }
     })
   },
+
+  permanentlyDeleteNote: async (noteId) => {
+    // Update local state immediately
+    set((state) => ({
+      notes: state.notes.filter((note) => note.id !== noteId),
+      activeNoteId: state.activeNoteId === noteId ? null : state.activeNoteId,
+      favoriteNoteIds: new Set(Array.from(state.favoriteNoteIds).filter(id => id !== noteId)),
+    }))
+
+    // Delete from Firebase
+    try {
+      await deleteNoteFromFirebase(noteId)
+    } catch (error) {
+      console.error('Failed to permanently delete note from Firebase:', error)
+    }
+  },
+
+  permanentlyDeleteNotes: async (noteIds) => {
+    // Update local state immediately
+    set((state) => ({
+      notes: state.notes.filter((note) => !noteIds.includes(note.id)),
+      selectedNoteIds: new Set(),
+      activeNoteId: noteIds.includes(state.activeNoteId || '') ? null : state.activeNoteId,
+      favoriteNoteIds: new Set(Array.from(state.favoriteNoteIds).filter(id => !noteIds.includes(id))),
+    }))
+
+    // Delete from Firebase
+    try {
+      await Promise.all(noteIds.map(id => deleteNoteFromFirebase(id)))
+    } catch (error) {
+      console.error('Failed to permanently delete notes from Firebase:', error)
+    }
+  },
   
   filteredNotes: () => {
     const { notes, searchQuery, activeProjectId, quickAccessView, favoriteNoteIds, activeFolderId, searchFilters, viewMode } = get()
@@ -486,16 +521,18 @@ export const useStore = create<StoreState>((set, get) => ({
     if (quickAccessView === 'recent') {
       filtered = notes.sort((a, b) => b.updatedAt.getTime() - a.updatedAt.getTime()).slice(0, 10)
     } else if (quickAccessView === 'favorites') {
-      filtered = filtered.filter(note => favoriteNoteIds.has(note.id))
+      filtered = notes.filter(note => favoriteNoteIds.has(note.id))
     }
     
-    // Filter by project or folder
-    if (activeProjectId) {
-      filtered = filtered.filter((note) => note.projectId === activeProjectId)
-    }
-    
-    if (activeFolderId) {
-      filtered = filtered.filter((note) => note.folderId === activeFolderId)
+    // Filter by project or folder (only for non-favorites views)
+    if (quickAccessView !== 'favorites' && quickAccessView !== 'recent') {
+      if (activeProjectId) {
+        filtered = filtered.filter((note) => note.projectId === activeProjectId)
+      }
+      
+      if (activeFolderId) {
+        filtered = filtered.filter((note) => note.folderId === activeFolderId)
+      }
     }
     
     // Filter by tags
@@ -551,16 +588,16 @@ export const useStore = create<StoreState>((set, get) => ({
     return folders.filter((folder) => folder.projectId === projectId)
   },
   
-  getNotesByFolder: (folderId) => {
+    getNotesByFolder: (folderId) => {
     const { notes } = get()
     return notes.filter((note) => note.folderId === folderId)
   },
-  
+
   getProjectNoteCount: (projectId) => {
     const { notes } = get()
     return notes.filter((note) => note.projectId === projectId).length
   },
-  
+
   recentNotes: () => {
     const { notes } = get()
     return notes.sort((a, b) => b.updatedAt.getTime() - a.updatedAt.getTime()).slice(0, 10)

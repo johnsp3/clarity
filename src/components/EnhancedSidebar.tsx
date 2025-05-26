@@ -55,11 +55,15 @@ export const EnhancedSidebar: React.FC<EnhancedSidebarProps> = ({
   const [editingFolderId, setEditingFolderId] = useState<string | null>(null)
   const [editingFolderName, setEditingFolderName] = useState('')
 
-  const handleDragEnd = (result: any) => {
+  const handleDragEnd = async (result: any) => {
     if (!result.destination) return
 
     if (result.type === 'project') {
-      reorderProjects(result.source.index, result.destination.index)
+      try {
+        await reorderProjects(result.source.index, result.destination.index)
+      } catch (error) {
+        console.error('Failed to reorder projects:', error)
+      }
     }
   }
 
@@ -68,22 +72,30 @@ export const EnhancedSidebar: React.FC<EnhancedSidebarProps> = ({
     setEditingFolderName(folder.name)
   }
 
-  const handleSaveRename = () => {
+  const handleSaveRename = async () => {
     if (editingFolderId && editingFolderName.trim()) {
-      updateFolder(editingFolderId, { name: editingFolderName.trim() })
-      setEditingFolderId(null)
-      setEditingFolderName('')
+      try {
+        await updateFolder(editingFolderId, { name: editingFolderName.trim() })
+        setEditingFolderId(null)
+        setEditingFolderName('')
+      } catch (error) {
+        console.error('Failed to rename folder:', error)
+      }
     }
   }
 
-  const handleDeleteFolder = (folder: FolderType) => {
+  const handleDeleteFolder = async (folder: FolderType) => {
     const folderNotes = getNotesByFolder(folder.id)
     const message = folderNotes.length > 0
       ? `Delete "${folder.name}"? This will not delete the ${folderNotes.length} note(s) inside.`
       : `Delete "${folder.name}"?`
     
     if (confirm(message)) {
-      deleteFolder(folder.id)
+      try {
+        await deleteFolder(folder.id)
+      } catch (error) {
+        console.error('Failed to delete folder:', error)
+      }
     }
   }
 

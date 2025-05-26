@@ -55,10 +55,14 @@ export const EnhancedNoteList: React.FC = () => {
     }
   }
 
-  const handleBulkDelete = () => {
+  const handleBulkDelete = async () => {
     if (selectedNoteIds.size > 0) {
-      deleteNotes(Array.from(selectedNoteIds))
-      clearSelection()
+      try {
+        await deleteNotes(Array.from(selectedNoteIds))
+        clearSelection()
+      } catch (error) {
+        console.error('Failed to delete notes:', error)
+      }
     }
   }
 

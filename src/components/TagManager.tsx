@@ -36,17 +36,25 @@ export const TagManager: React.FC = () => {
     }
   }
 
-  const handleUpdateTag = () => {
+  const handleUpdateTag = async () => {
     if (editingTag && editingName.trim()) {
-      updateTag(editingTag.id, { name: editingName.trim() })
-      setEditingTag(null)
-      setEditingName('')
+      try {
+        await updateTag(editingTag.id, { name: editingName.trim() })
+        setEditingTag(null)
+        setEditingName('')
+      } catch (error) {
+        console.error('Failed to update tag:', error)
+      }
     }
   }
 
-  const handleDeleteTag = (tag: Tag) => {
+  const handleDeleteTag = async (tag: Tag) => {
     if (confirm(`Are you sure you want to delete the tag "${tag.name}"? This will remove it from all notes.`)) {
-      deleteTag(tag.id)
+      try {
+        await deleteTag(tag.id)
+      } catch (error) {
+        console.error('Failed to delete tag:', error)
+      }
     }
   }
 
@@ -202,7 +210,13 @@ export const TagManager: React.FC = () => {
                                 {tagColors.map((color) => (
                                   <DropdownMenu.Item
                                     key={color}
-                                    onClick={() => updateTag(tag.id, { color })}
+                                    onClick={async () => {
+                                      try {
+                                        await updateTag(tag.id, { color })
+                                      } catch (error) {
+                                        console.error('Failed to update tag color:', error)
+                                      }
+                                    }}
                                     className="cursor-pointer"
                                   >
                                     <div className={`w-8 h-8 rounded-lg bg-gradient-to-r ${color} 

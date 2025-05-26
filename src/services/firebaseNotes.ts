@@ -203,6 +203,19 @@ export const loadFolders = async (): Promise<Folder[]> => {
   }
 };
 
+// Delete folder from Firebase
+export const deleteFolderFromFirebase = async (folderId: string): Promise<void> => {
+  try {
+    const userId = getUserId();
+    const folderRef = doc(db, 'users', userId, 'folders', folderId);
+    await deleteDoc(folderRef);
+    console.log('Folder deleted from Firebase:', folderId);
+  } catch (error) {
+    console.error('Error deleting folder:', error);
+    throw error;
+  }
+};
+
 // Tags operations
 export const saveTag = async (tag: Tag): Promise<void> => {
   try {
@@ -247,6 +260,19 @@ export const loadTags = async (): Promise<Tag[]> => {
   }
 };
 
+// Delete tag from Firebase
+export const deleteTagFromFirebase = async (tagId: string): Promise<void> => {
+  try {
+    const userId = getUserId();
+    const tagRef = doc(db, 'users', userId, 'tags', tagId);
+    await deleteDoc(tagRef);
+    console.log('Tag deleted from Firebase:', tagId);
+  } catch (error) {
+    console.error('Error deleting tag:', error);
+    throw error;
+  }
+};
+
 // Batch operations
 export const deleteNotesInProject = async (projectId: string): Promise<void> => {
   try {
@@ -278,6 +304,23 @@ export const deleteNotesInFolder = async (folderId: string): Promise<void> => {
     console.log(`Deleted all notes in folder: ${folderId}`);
   } catch (error) {
     console.error('Error deleting notes in folder:', error);
+    throw error;
+  }
+};
+
+// Batch delete multiple notes
+export const deleteMultipleNotesFromFirebase = async (noteIds: string[]): Promise<void> => {
+  try {
+    const userId = getUserId();
+    const deletePromises = noteIds.map(noteId => {
+      const noteRef = doc(db, 'users', userId, 'notes', noteId);
+      return deleteDoc(noteRef);
+    });
+    
+    await Promise.all(deletePromises);
+    console.log('Multiple notes deleted from Firebase:', noteIds.length);
+  } catch (error) {
+    console.error('Error deleting multiple notes:', error);
     throw error;
   }
 }; 

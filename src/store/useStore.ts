@@ -52,7 +52,7 @@ interface StoreState {
   addNote: (note: Omit<Note, 'id' | 'createdAt' | 'updatedAt' | 'order'>) => void
   updateNote: (id: string, updates: Partial<Note>) => void
   deleteNote: (id: string) => void
-  deleteNotes: (ids: string[]) => void
+  deleteNotes: (ids: string[]) => Promise<void>
   setActiveNote: (id: string | null) => void
   toggleNoteSelection: (id: string) => void
   clearSelection: () => void
@@ -62,18 +62,18 @@ interface StoreState {
   updateProject: (id: string, updates: Partial<Project>) => void
   deleteProject: (id: string) => void
   setActiveProject: (id: string | null) => void
-  reorderProjects: (startIndex: number, endIndex: number) => void
+  reorderProjects: (startIndex: number, endIndex: number) => Promise<void>
   
   addFolder: (folder: Omit<Folder, 'id' | 'createdAt' | 'lastModified' | 'noteCount' | 'order'>) => void
-  updateFolder: (id: string, updates: Partial<Folder>) => void
-  deleteFolder: (id: string) => void
+  updateFolder: (id: string, updates: Partial<Folder>) => Promise<void>
+  deleteFolder: (id: string) => Promise<void>
   setActiveFolder: (id: string | null) => void
   toggleFolderExpansion: (id: string) => void
   reorderFolders: (projectId: string, startIndex: number, endIndex: number) => void
   
   addTag: (name: string) => Tag
-  updateTag: (id: string, updates: Partial<Tag>) => void
-  deleteTag: (id: string) => void
+  updateTag: (id: string, updates: Partial<Tag>) => Promise<void>
+  deleteTag: (id: string) => Promise<void>
   mergeTag: (fromId: string, toId: string) => void
   
   setSearchQuery: (query: string) => void
@@ -115,13 +115,16 @@ import {
   saveNote, 
   loadNotes, 
   deleteNoteFromFirebase,
+  deleteMultipleNotesFromFirebase,
   saveProject,
   loadProjects,
   deleteProjectFromFirebase,
   saveFolder,
   loadFolders,
+  deleteFolderFromFirebase,
   saveTag,
-  loadTags
+  loadTags,
+  deleteTagFromFirebase
 } from '../services/firebaseNotes';
 
 export const useStore = create<StoreState>((set, get) => ({
@@ -233,11 +236,19 @@ export const useStore = create<StoreState>((set, get) => ({
     }
   },
   
-  deleteNotes: (ids) => {
+  deleteNotes: async (ids) => {
+    // Update local state immediately
     set((state) => ({
       notes: state.notes.filter((note) => !ids.includes(note.id)),
       selectedNoteIds: new Set(Array.from(state.selectedNoteIds).filter((id: string) => !ids.includes(id))),
     }))
+    
+    // Delete from Firebase
+    try {
+      await deleteMultipleNotesFromFirebase(ids)
+    } catch (error) {
+      console.error('Failed to delete notes from Firebase:', error)
+    }
   },
   
   setActiveNote: (id) => {
@@ -327,7 +338,7 @@ export const useStore = create<StoreState>((set, get) => ({
     set({ activeProjectId: id })
   },
   
-  reorderProjects: (startIndex, endIndex) => {
+  reorderProjects: async (startIndex, endIndex) => {
     set((state) => {
       const projects = Array.from(state.projects)
       const [removed] = projects.splice(startIndex, 1)
@@ -341,6 +352,14 @@ export const useStore = create<StoreState>((set, get) => ({
       
       return { projects: updatedProjects }
     })
+    
+    // Save updated projects to Firebase
+    const { projects } = get()
+    try {
+      await Promise.all(projects.map(project => saveProject(project)))
+    } catch (error) {
+      console.error('Failed to save project order to Firebase:', error)
+    }
   },
   
   addFolder: async (folderData) => {
@@ -364,15 +383,27 @@ export const useStore = create<StoreState>((set, get) => ({
     }
   },
   
-  updateFolder: (id, updates) => {
+  updateFolder: async (id, updates) => {
+    // Update local state immediately
     set((state) => ({
       folders: state.folders.map((folder) =>
-        folder.id === id ? { ...folder, ...updates } : folder
+        folder.id === id ? { ...folder, ...updates, lastModified: new Date() } : folder
       ),
     }))
+    
+    // Save to Firebase
+    const updatedFolder = get().folders.find(f => f.id === id)
+    if (updatedFolder) {
+      try {
+        await saveFolder(updatedFolder)
+      } catch (error) {
+        console.error('Failed to update folder in Firebase:', error)
+      }
+    }
   },
   
-  deleteFolder: (id) => {
+  deleteFolder: async (id) => {
+    // Update local state immediately
     set((state) => ({
       folders: state.folders.filter((folder) => folder.id !== id),
       notes: state.notes.map((note) =>
@@ -380,6 +411,17 @@ export const useStore = create<StoreState>((set, get) => ({
       ),
       activeFolderId: state.activeFolderId === id ? null : state.activeFolderId,
     }))
+    
+    // Update notes that were in this folder
+    const notesToUpdate = get().notes.filter(note => note.folderId === null && note.projectId)
+    try {
+      await Promise.all([
+        deleteFolderFromFirebase(id),
+        ...notesToUpdate.map(note => saveNote(note))
+      ])
+    } catch (error) {
+      console.error('Failed to delete folder from Firebase:', error)
+    }
   },
   
   setActiveFolder: (id) => {
@@ -426,18 +468,37 @@ export const useStore = create<StoreState>((set, get) => ({
     return newTag
   },
   
-  updateTag: (id, updates) => {
+  updateTag: async (id, updates) => {
+    // Update local state immediately
     set((state) => ({
       tags: state.tags.map((tag) =>
         tag.id === id ? { ...tag, ...updates } : tag
       ),
     }))
+    
+    // Save to Firebase
+    const updatedTag = get().tags.find(t => t.id === id)
+    if (updatedTag) {
+      try {
+        await saveTag(updatedTag)
+      } catch (error) {
+        console.error('Failed to update tag in Firebase:', error)
+      }
+    }
   },
   
-  deleteTag: (id) => {
+  deleteTag: async (id) => {
+    // Update local state immediately
     set((state) => ({
       tags: state.tags.filter((tag) => tag.id !== id),
     }))
+    
+    // Delete from Firebase
+    try {
+      await deleteTagFromFirebase(id)
+    } catch (error) {
+      console.error('Failed to delete tag from Firebase:', error)
+    }
   },
   
   mergeTag: (fromId, toId) => {

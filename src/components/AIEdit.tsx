@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react'
-import { transformText, enhanceContent } from '../utils/chatgpt-editor'
+import { transformText, enhanceContent, clearAPIQueue } from '../utils/chatgpt-editor'
 import { getOpenAIClient } from '../utils/openai-client'
 import { 
   Sparkles,
@@ -63,6 +63,17 @@ export const AIEdit: React.FC<AIEditProps> = ({ content, onRewrite }) => {
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [])
 
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      // Clear any pending API requests when component unmounts
+      if (isLoading) {
+        console.log('🧹 AIEdit: Cleaning up pending requests on unmount')
+        clearAPIQueue()
+      }
+    }
+  }, [isLoading])
+
   const handleTransform = async (transformation: string, custom: string | null = null) => {
     if (!isApiKeyConfigured) {
       alert('Please configure your OpenAI API key in Settings to use AI features')
@@ -74,6 +85,7 @@ export const AIEdit: React.FC<AIEditProps> = ({ content, onRewrite }) => {
       return
     }
 
+    console.log('🚀 AIEdit: Starting transformation request:', transformation)
     setIsLoading(true)
     setIsOpen(false)
 
@@ -113,10 +125,14 @@ export const AIEdit: React.FC<AIEditProps> = ({ content, onRewrite }) => {
         if (transformation === 'markdown' || detectedFormat === 'markdown') {
           console.log('✅ Format conversion completed. Content should now display with proper formatting.')
         }
+        
+        console.log('✅ AIEdit: Transformation completed successfully')
       } else {
+        console.error('❌ AIEdit: Transformation failed:', result.error)
         alert(`Error: ${result.error || 'Unknown error occurred'}`)
       }
     } catch (error: any) {
+      console.error('❌ AIEdit: Transformation error:', error)
       alert(`Error: ${error.message || 'Unknown error occurred'}`)
     } finally {
       setIsLoading(false)

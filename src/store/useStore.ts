@@ -1,6 +1,12 @@
 import { create } from 'zustand'
 import { Tag, Folder, ViewMode, SearchFilter, ContentFormat } from '../types/editor'
 
+// Error handling utility
+const handleAsyncError = (operation: string, error: unknown) => {
+  console.error(`Failed to ${operation}:`, error)
+  // In a real app, you might want to send this to an error reporting service
+}
+
 export interface Note {
   id: string
   title: string
@@ -149,13 +155,23 @@ export const useStore = create<StoreState>((set, get) => ({
     set({ isLoading: true })
     
     try {
-      // Load all data in parallel
-      const [notes, projects, folders, tags] = await Promise.all([
+      // Load all data in parallel with timeout
+      const loadPromises = [
         loadNotes(),
         loadProjects(),
         loadFolders(),
         loadTags()
-      ])
+      ]
+      
+      // Add timeout to prevent hanging
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Load timeout')), 30000)
+      )
+      
+      const [notes, projects, folders, tags] = await Promise.race([
+        Promise.all(loadPromises),
+        timeoutPromise
+      ]) as [any[], any[], any[], any[]]
       
       set({
         notes,
@@ -172,8 +188,9 @@ export const useStore = create<StoreState>((set, get) => ({
         tags: tags.length
       })
     } catch (error) {
-      console.error('Failed to load data from Firebase:', error)
+      handleAsyncError('load data from Firebase', error)
       set({ isLoading: false })
+      throw error // Re-throw so calling code can handle it
     }
   },
   

@@ -1,8 +1,7 @@
 import React, { useState } from 'react'
 import { User, LogOut, ChevronDown } from 'lucide-react'
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu'
-// @ts-expect-error - JavaScript module
-import { signOutUser, auth } from '../services/firebase.js'
+import { signOutUser, auth } from '../services/firebase'
 
 interface UserProfileProps {
   userEmail: string

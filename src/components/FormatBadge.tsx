@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState, useRef } from 'react'
 import { detectTextFormatAI } from '../utils/chatgpt-editor'
 import { 
   Hash, 
@@ -20,6 +20,20 @@ export const FormatBadge: React.FC<FormatBadgeProps> = ({ content, visible = tru
   const [format, setFormat] = useState<string | null>(null)
   const [confidence, setConfidence] = useState<'high' | 'medium' | 'low'>('medium')
   const [isDetecting, setIsDetecting] = useState(false)
+  
+  // Refs for cleanup and debouncing
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null)
+  const lastContentRef = useRef<string>('')
+  const isUnmountedRef = useRef(false)
+
+  useEffect(() => {
+    return () => {
+      isUnmountedRef.current = true
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current)
+      }
+    }
+  }, [])
 
   useEffect(() => {
     if (providedFormat) {
@@ -28,34 +42,63 @@ export const FormatBadge: React.FC<FormatBadgeProps> = ({ content, visible = tru
       return
     }
 
+    // Clear any existing timeout
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current)
+    }
+
     const detectFormat = async () => {
+      // Check if component is unmounted
+      if (isUnmountedRef.current) return
+      
       if (!content || content.length < 10) {
         setFormat('plain')
+        setIsDetecting(false)
         return
       }
 
+      // Skip if content hasn't changed significantly
+      if (lastContentRef.current === content) {
+        return
+      }
+      
+      lastContentRef.current = content
       setIsDetecting(true)
       
       try {
-        // Use ChatGPT API for format detection
-        console.log('🤖 FormatBadge: Using ChatGPT for format detection')
+        // Use ChatGPT API for format detection (now with queue management)
+        console.log('🤖 FormatBadge: Requesting format detection (queued)')
         const result = await detectTextFormatAI(content)
-        console.log('🎯 FormatBadge: ChatGPT detection result:', result)
-        setFormat(result.format)
-        setConfidence(result.confidence)
+        
+        // Check if component is still mounted and content hasn't changed
+        if (!isUnmountedRef.current && lastContentRef.current === content) {
+          console.log('🎯 FormatBadge: Format detection result:', result)
+          setFormat(result.format)
+          setConfidence(result.confidence)
+        }
       } catch (error) {
-        console.error('❌ FormatBadge: ChatGPT detection failed:', error)
-        // Fallback to plain text if ChatGPT fails
-        setFormat('plain')
-        setConfidence('low')
+        console.error('❌ FormatBadge: Format detection failed:', error)
+        // Only update state if component is still mounted
+        if (!isUnmountedRef.current) {
+          setFormat('plain')
+          setConfidence('low')
+        }
       } finally {
-        setIsDetecting(false)
+        // Only update state if component is still mounted
+        if (!isUnmountedRef.current) {
+          setIsDetecting(false)
+        }
       }
     }
 
-    // Immediate detection for better UX
-    const timer = setTimeout(detectFormat, 500)
-    return () => clearTimeout(timer)
+    // Debounce format detection with longer delay to reduce API calls
+    timeoutRef.current = setTimeout(detectFormat, 1000) // Increased from 500ms to 1000ms
+    
+    return () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current)
+      }
+    }
   }, [content, providedFormat])
 
   if (!visible || !format || isDetecting) return null

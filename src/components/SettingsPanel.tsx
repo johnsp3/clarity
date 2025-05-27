@@ -6,8 +6,7 @@ import {
 } from 'lucide-react'
 import * as Dialog from '@radix-ui/react-dialog'
 import { encryptData, decryptData } from '../services/encryption'
-// @ts-expect-error - JavaScript module
-import { signOutUser, auth } from '../services/firebase.js'
+import { signOutUser, auth } from '../services/firebase'
 
 interface SettingsPanelProps {
   isOpen?: boolean

@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import SetupWizard from './components/SetupWizard';
-// @ts-expect-error - JavaScript module
-import { isFirebaseConfigured, reinitializeFirebase, signInWithGoogle, auth } from './services/firebase.js';
+import { isFirebaseConfigured, reinitializeFirebase, signInWithGoogle, auth } from './services/firebase';
 import { EnhancedSidebar } from './components/EnhancedSidebar'
 import { EnhancedNoteList } from './components/EnhancedNoteList'
 import { Editor } from './components/Editor'
@@ -13,7 +12,7 @@ import { ImportManager } from './components/ImportManager'
 
 import { useStore } from './store/useStore'
 import { onAuthStateChanged } from 'firebase/auth'
-import { Search, Settings } from 'lucide-react'
+import { Search, Settings, Plus } from 'lucide-react'
 
 function App() {
   const [isConfigured, setIsConfigured] = useState(false);
@@ -50,7 +49,7 @@ function App() {
     setIsConfigured(configured);
     setLoading(false); // Initial config check is done
     
-    if (configured) {
+    if (configured && auth) {
       // Listen for auth state changes
       const unsubscribe = onAuthStateChanged(auth, async (user) => {
         console.log('Auth state changed:', user?.email);
@@ -151,8 +150,11 @@ function App() {
 
   if (loading || authLoading) {
     return (
-      <div className="min-h-screen bg-gray-900 flex items-center justify-center">
-        <div className="text-gray-400">Loading...</div>
+      <div className="min-h-screen bg-[var(--bg-secondary)] flex items-center justify-center">
+        <div className="flex flex-col items-center gap-4">
+          <div className="w-8 h-8 border-2 border-[var(--accent-primary)] border-t-transparent rounded-full animate-spin"></div>
+          <div className="text-[var(--text-secondary)] font-medium">Loading Clarity...</div>
+        </div>
       </div>
     );
   }
@@ -163,35 +165,46 @@ function App() {
 
   if (!isAuthenticated) {
     return (
-      <div className="min-h-screen bg-gray-900 flex items-center justify-center">
-        <div className="text-center space-y-6 max-w-md">
-          <div className="space-y-2">
-            <h1 className="text-3xl font-bold text-gray-100">Welcome to Clarity</h1>
-            <p className="text-gray-400">Please sign in to access your notes</p>
+      <div className="min-h-screen bg-[var(--bg-secondary)] flex items-center justify-center">
+        <div className="text-center space-y-8 max-w-md p-8">
+          <div className="space-y-4">
+            <div className="w-16 h-16 bg-gradient-primary rounded-2xl flex items-center justify-center mx-auto shadow-[var(--shadow-lg)]">
+              <span className="text-2xl font-bold text-white">C</span>
+            </div>
+            <h1 className="text-3xl font-semibold text-[var(--text-primary)]">Welcome to Clarity</h1>
+            <p className="text-[var(--text-secondary)] text-lg">Your premium note-taking workspace</p>
           </div>
           
           <button
             onClick={handleSignIn}
             disabled={authLoading}
-            className={`px-8 py-3 rounded-lg font-semibold transition-all ${
+            className={`w-full px-8 py-4 rounded-lg font-semibold transition-all shadow-[var(--shadow-md)] ${
               authLoading 
-                ? 'bg-gray-600 text-gray-400 cursor-not-allowed' 
-                : 'bg-yellow-500 hover:bg-yellow-400 text-gray-900 hover:scale-105'
+                ? 'bg-[var(--bg-hover)] text-[var(--text-tertiary)] cursor-not-allowed' 
+                : 'bg-[var(--accent-primary)] hover:bg-[var(--accent-primary-hover)] text-white hover:shadow-[var(--shadow-lg)] hover:scale-[1.02]'
             }`}
           >
-            {authLoading ? 'Signing in...' : 'Sign in with Google'}
+            {authLoading ? (
+              <div className="flex items-center justify-center gap-3">
+                <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                Signing in...
+              </div>
+            ) : (
+              'Continue with Google'
+            )}
           </button>
           
-          <div className="text-sm text-gray-500 space-y-2">
+          <div className="text-sm text-[var(--text-tertiary)] space-y-3">
+            <p>Secure authentication powered by Google</p>
             <p>Make sure pop-ups are allowed for this site</p>
           </div>
           
           {/* Troubleshooting button */}
           <button
             onClick={() => window.location.reload()}
-            className="text-xs text-gray-500 hover:text-gray-400 underline"
+            className="text-sm text-[var(--text-tertiary)] hover:text-[var(--text-secondary)] underline transition-colors"
           >
-            Having trouble? Click here to refresh
+            Having trouble? Refresh the page
           </button>
         </div>
       </div>
@@ -200,34 +213,37 @@ function App() {
 
   if (isLoadingData) {
     return (
-      <div className="min-h-screen bg-gray-900 flex items-center justify-center">
-        <div className="text-gray-400">Loading your notes...</div>
+      <div className="min-h-screen bg-[var(--bg-secondary)] flex items-center justify-center">
+        <div className="flex flex-col items-center gap-4">
+          <div className="w-8 h-8 border-2 border-[var(--accent-primary)] border-t-transparent rounded-full animate-spin"></div>
+          <div className="text-[var(--text-secondary)] font-medium">Loading your notes...</div>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="flex h-screen bg-white">
+    <div className="flex h-screen bg-[var(--bg-secondary)] overflow-hidden">
       <EnhancedSidebar 
         onShowSearch={() => setShowSearch(true)}
         userEmail={currentUser?.email || ''}
         onSignOut={handleSignOut}
       />
       <EnhancedNoteList />
-      <div className="flex-1 flex flex-col">
-        {/* Apple-style Top Navigation Bar */}
-        <div className="h-[52px] bg-white border-b border-[#D2D2D7] flex items-center justify-between px-8">
+      <div className="flex-1 flex flex-col min-h-0">
+        {/* Premium Enterprise Top Navigation Bar */}
+        <div className="h-[56px] bg-[var(--bg-primary)] border-b border-[var(--border-light)] flex items-center justify-between px-8 shadow-[var(--shadow-xs)] flex-shrink-0">
           <div className="flex items-center gap-8">
-            <h1 className="text-apple-title-sm">Clarity</h1>
+            <h1 className="text-apple-title-sm text-gradient-primary">Clarity</h1>
             
-            {/* Integrated Search Bar */}
+            {/* Premium Integrated Search Bar */}
             <button
               onClick={() => setCommandPaletteOpen(true)}
-              className="search-apple flex items-center gap-3"
+              className="search-apple flex items-center gap-3 hover-lift"
             >
-              <Search size={16} className="text-[#86868B]" />
-              <span className="flex-1 text-left">Search</span>
-              <span className="text-[13px] text-[#86868B]">⌘K</span>
+              <Search size={16} className="text-[var(--text-tertiary)]" />
+              <span className="flex-1 text-left text-[var(--text-secondary)]">Search notes, projects...</span>
+              <span className="text-[13px] text-[var(--text-tertiary)] bg-[var(--bg-hover)] px-2 py-1 rounded font-medium">⌘K</span>
             </button>
           </div>
           
@@ -236,24 +252,25 @@ function App() {
             {/* Settings Button */}
             <button
               onClick={() => setShowSettings(true)}
-              className="btn-apple-icon"
+              className="btn-apple-icon hover-lift"
               title="Settings"
             >
               <Settings size={16} />
             </button>
             
-            {/* Create Button */}
+            {/* Premium Create Button */}
             <button
               onClick={handleCreateNote}
-              className="btn-apple-primary"
+              className="btn-apple-primary hover-lift"
             >
-              Create
+              <Plus size={16} className="mr-2" />
+              Create Note
             </button>
           </div>
         </div>
         
         {/* Editor content */}
-        <div className="flex-1">
+        <div className="flex-1 bg-[var(--bg-primary)] min-h-0 overflow-hidden">
           <Editor 
             onShowImport={() => setShowImport(true)}
             onExportNotes={handleExportNotes}

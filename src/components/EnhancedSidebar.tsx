@@ -177,21 +177,21 @@ export const EnhancedSidebar: React.FC<EnhancedSidebarProps> = ({
               >
                 <ChevronRight 
                   size={12} 
-                  className={`flex-shrink-0 text-[#86868B] transition-transform duration-200 ${
+                  className={`flex-shrink-0 text-[var(--text-tertiary)] transition-transform var(--transition-fast) ${
                     isExpanded ? 'rotate-90' : ''
                   }`}
                 />
                 
                 {isExpanded ? (
-                  <FolderOpen size={16} className="flex-shrink-0 text-[#86868B]" />
+                  <FolderOpen size={16} className="flex-shrink-0 text-[var(--text-secondary)]" />
                 ) : (
-                  <Folder size={16} className="flex-shrink-0 text-[#86868B]" />
+                  <Folder size={16} className="flex-shrink-0 text-[var(--text-secondary)]" />
                 )}
                 
                 <span className="flex-1 text-left truncate">{folder.name}</span>
                 
                 {folderNotes.length > 0 && (
-                  <span className="text-[13px] text-[#86868B]">
+                  <span className="text-[13px] text-[var(--text-tertiary)] bg-[var(--bg-hover)] px-2 py-0.5 rounded-full font-medium">
                     {folderNotes.length}
                   </span>
                 )}
@@ -201,9 +201,9 @@ export const EnhancedSidebar: React.FC<EnhancedSidebarProps> = ({
                     <button
                       onClick={(e) => e.stopPropagation()}
                       className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 p-1 
-                               hover:bg-[#F5F5F7] rounded"
+                               hover:bg-gray-100 rounded"
                     >
-                      <MoreVertical size={14} className="text-[#86868B]" />
+                      <MoreVertical size={14} className="text-gray-500" />
                     </button>
                   </DropdownMenu.Trigger>
                   <DropdownMenu.Portal>
@@ -215,14 +215,14 @@ export const EnhancedSidebar: React.FC<EnhancedSidebarProps> = ({
                         onClick={() => handleRenameFolder(folder)}
                         className="dropdown-item-apple"
                       >
-                        <Edit3 size={14} className="text-[#86868B]" />
+                        <Edit3 size={14} className="text-gray-500" />
                         Rename
                       </DropdownMenu.Item>
                       <DropdownMenu.Item 
                         onClick={() => handleCreateSubfolder(folder)}
                         className="dropdown-item-apple"
                       >
-                        <Plus size={14} className="text-[#86868B]" />
+                        <Plus size={14} className="text-gray-500" />
                         New Subfolder
                       </DropdownMenu.Item>
                       <DropdownMenu.Separator className="divider-apple my-1" />
@@ -254,10 +254,10 @@ export const EnhancedSidebar: React.FC<EnhancedSidebarProps> = ({
                             : ''
                         }`}
                       >
-                        <FileText size={16} className="flex-shrink-0 text-[#86868B]" />
+                        <FileText size={16} className="flex-shrink-0 text-[var(--text-secondary)]" />
                         <span className="flex-1 text-left truncate">{note.title}</span>
-                        {note.hasImages && <Image size={12} className="text-[#86868B]" />}
-                        {note.hasCode && <Code size={12} className="text-[#86868B]" />}
+                        {note.hasImages && <Image size={12} className="text-[var(--text-tertiary)]" />}
+                        {note.hasCode && <Code size={12} className="text-[var(--text-tertiary)]" />}
                       </button>
                     </ContextMenu.Trigger>
                     
@@ -293,15 +293,15 @@ export const EnhancedSidebar: React.FC<EnhancedSidebarProps> = ({
               onClick={() => handleRenameFolder(folder)}
               className="dropdown-item-apple"
             >
-              <Edit3 size={14} className="text-[#86868B]" />
+              <Edit3 size={14} className="text-gray-500" />
               Rename
-              <span className="ml-auto text-[13px] text-[#86868B]">⌘R</span>
+              <span className="ml-auto text-[13px] text-gray-500">⌘R</span>
             </ContextMenu.Item>
             <ContextMenu.Item 
               onClick={() => handleCreateSubfolder(folder)}
               className="dropdown-item-apple"
             >
-              <Plus size={14} className="text-[#86868B]" />
+              <Plus size={14} className="text-gray-500" />
               New Subfolder
             </ContextMenu.Item>
             <ContextMenu.Separator className="divider-apple my-1" />
@@ -321,10 +321,10 @@ export const EnhancedSidebar: React.FC<EnhancedSidebarProps> = ({
 
   return (
     <>
-      <aside className="w-[260px] h-full bg-white border-r border-[#D2D2D7] flex flex-col">
+      <aside className="w-[260px] h-screen bg-[var(--bg-primary)] border-r border-[var(--border-light)] flex flex-col shadow-[var(--shadow-xs)] overflow-hidden">
         {/* Library Section */}
-        <div className="p-6">
-          <h2 className="text-apple-footnote mb-4">
+        <div className="p-6 flex-shrink-0">
+          <h2 className="text-apple-footnote mb-6">
             LIBRARY
           </h2>
           
@@ -341,9 +341,9 @@ export const EnhancedSidebar: React.FC<EnhancedSidebarProps> = ({
                   : ''
               }`}
             >
-              <FileText size={16} className="text-[#86868B]" />
+              <FileText size={16} className="text-[var(--text-secondary)]" />
               <span className="flex-1 text-left">All Notes</span>
-              <span className="text-[13px] text-[#86868B]">
+              <span className="text-[13px] text-[var(--text-tertiary)] bg-[var(--bg-hover)] px-2 py-0.5 rounded-full font-medium">
                 {notes.length}
               </span>
             </button>
@@ -360,9 +360,9 @@ export const EnhancedSidebar: React.FC<EnhancedSidebarProps> = ({
                   : ''
               }`}
             >
-              <Clock size={16} className="text-[#86868B]" />
+              <Clock size={16} className="text-[var(--text-secondary)]" />
               <span className="flex-1 text-left">Recent</span>
-              <span className="text-[13px] text-[#86868B]">
+              <span className="text-[13px] text-[var(--text-tertiary)] bg-[var(--bg-hover)] px-2 py-0.5 rounded-full font-medium">
                 {recentNotes().length}
               </span>
             </button>
@@ -379,37 +379,41 @@ export const EnhancedSidebar: React.FC<EnhancedSidebarProps> = ({
                   : ''
               }`}
             >
-              <Star size={16} className="text-[#86868B]" />
+              <Star size={16} className="text-[var(--text-secondary)]" />
               <span className="flex-1 text-left">Favorites</span>
-              <span className="text-[13px] text-[#86868B]">
+              <span className="text-[13px] text-[var(--text-tertiary)] bg-[var(--bg-hover)] px-2 py-0.5 rounded-full font-medium">
                 {favoriteNotes().length}
               </span>
             </button>
 
-            {/* Perplexity Search */}
+            {/* Premium AI Search */}
             <button
               onClick={onShowSearch}
-              className="sidebar-item w-full"
+              className="sidebar-item w-full group"
             >
-              <Sparkles size={16} className="text-[#86868B]" />
-              <span className="flex-1 text-left">Perplexity Search</span>
+              <Sparkles size={16} className="text-[var(--accent-primary)] group-hover:text-[var(--accent-primary-hover)]" />
+              <span className="flex-1 text-left">AI Search</span>
+              <span className="text-[10px] text-[var(--accent-primary)] bg-[var(--accent-primary-light)] px-1.5 py-0.5 rounded-full font-semibold uppercase tracking-wide">
+                PRO
+              </span>
             </button>
           </div>
         </div>
 
-        <div className="divider-apple" />
+        <div className="divider-apple flex-shrink-0" />
 
         {/* Collections Section */}
-        <div className="flex-1 overflow-y-auto p-6">
-          <div className="flex items-center justify-between mb-4">
+        <div className="flex-1 overflow-y-auto p-6 min-h-0">
+          <div className="flex items-center justify-between mb-6">
             <h2 className="text-apple-footnote">
               COLLECTIONS
             </h2>
             <button
               onClick={() => setShowProjectModal(true)}
-              className="btn-apple-icon"
+              className="btn-apple-icon hover-lift"
+              title="Create new collection"
             >
-              <Plus size={16} className="text-[#86868B]" />
+              <Plus size={16} className="text-[var(--text-secondary)]" />
             </button>
           </div>
           
@@ -455,13 +459,13 @@ export const EnhancedSidebar: React.FC<EnhancedSidebarProps> = ({
                               >
                                 <ChevronRight 
                                   size={12} 
-                                  className={`flex-shrink-0 text-[#86868B] transition-transform duration-200 ${
+                                  className={`flex-shrink-0 text-[var(--text-tertiary)] transition-transform var(--transition-fast) ${
                                     isExpanded ? 'rotate-90' : ''
                                   }`}
                                 />
                                 
                                 <span className="flex-1 text-left">{project.name}</span>
-                                <span className="text-[13px] text-[#86868B]">
+                                <span className="text-[13px] text-[var(--text-tertiary)] bg-[var(--bg-hover)] px-2 py-0.5 rounded-full font-medium">
                                   {noteCount}
                                 </span>
                                 
@@ -470,9 +474,9 @@ export const EnhancedSidebar: React.FC<EnhancedSidebarProps> = ({
                                     <button
                                       onClick={(e) => e.stopPropagation()}
                                       className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 p-1 
-                                               hover:bg-[#F5F5F7] rounded"
+                                               hover:bg-gray-100 rounded"
                                     >
-                                      <MoreVertical size={14} className="text-[#86868B]" />
+                                      <MoreVertical size={14} className="text-gray-500" />
                                     </button>
                                   </DropdownMenu.Trigger>
                                   <DropdownMenu.Portal>
@@ -483,7 +487,7 @@ export const EnhancedSidebar: React.FC<EnhancedSidebarProps> = ({
                                       <DropdownMenu.Item 
                                         className="dropdown-item-apple"
                                       >
-                                        <Edit3 size={14} className="text-[#86868B]" />
+                                        <Edit3 size={14} className="text-gray-500" />
                                         Rename
                                       </DropdownMenu.Item>
                                       <DropdownMenu.Separator className="divider-apple my-1" />
@@ -523,7 +527,7 @@ export const EnhancedSidebar: React.FC<EnhancedSidebarProps> = ({
         </div>
 
         {/* User Profile at bottom */}
-        <div className="p-6 border-t border-[#D2D2D7]">
+        <div className="p-6 border-t border-[var(--border-light)] bg-[var(--bg-tertiary)] flex-shrink-0">
           <UserProfile 
             userEmail={userEmail} 
             onSignOut={onSignOut}

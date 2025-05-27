@@ -9,8 +9,7 @@ import {
   orderBy,
   serverTimestamp
 } from 'firebase/firestore';
-// @ts-expect-error - JavaScript module
-import { db, auth } from './firebase.js';
+import { db, auth } from './firebase';
 import type { Note, Project } from '../store/useStore';
 import type { Folder, Tag } from '../types/editor';
 
@@ -22,10 +21,11 @@ const timestampToDate = (timestamp: any): Date => {
   return new Date();
 };
 
-// Helper to get current user ID
+// Helper to get current user ID and check database
 const getUserId = () => {
   const user = auth?.currentUser;
   if (!user) throw new Error('User not authenticated');
+  if (!db) throw new Error('Database not initialized');
   return user.uid;
 };
 
@@ -33,7 +33,7 @@ const getUserId = () => {
 export const saveNote = async (note: Note): Promise<void> => {
   try {
     const userId = getUserId();
-    const noteRef = doc(db, 'users', userId, 'notes', note.id);
+    const noteRef = doc(db!, 'users', userId, 'notes', note.id);
     
     const noteData = {
       ...note,
@@ -53,7 +53,7 @@ export const saveNote = async (note: Note): Promise<void> => {
 export const loadNotes = async (): Promise<Note[]> => {
   try {
     const userId = getUserId();
-    const notesRef = collection(db, 'users', userId, 'notes');
+    const notesRef = collection(db!, 'users', userId, 'notes');
     const q = query(notesRef, orderBy('updatedAt', 'desc'));
     
     const snapshot = await getDocs(q);
@@ -80,7 +80,7 @@ export const loadNotes = async (): Promise<Note[]> => {
 export const deleteNoteFromFirebase = async (noteId: string): Promise<void> => {
   try {
     const userId = getUserId();
-    const noteRef = doc(db, 'users', userId, 'notes', noteId);
+    const noteRef = doc(db!, 'users', userId, 'notes', noteId);
     await deleteDoc(noteRef);
     console.log('Note deleted from Firebase:', noteId);
   } catch (error) {
@@ -93,7 +93,7 @@ export const deleteNoteFromFirebase = async (noteId: string): Promise<void> => {
 export const saveProject = async (project: Project): Promise<void> => {
   try {
     const userId = getUserId();
-    const projectRef = doc(db, 'users', userId, 'projects', project.id);
+    const projectRef = doc(db!, 'users', userId, 'projects', project.id);
     
     const projectData = {
       ...project,
@@ -113,7 +113,7 @@ export const saveProject = async (project: Project): Promise<void> => {
 export const loadProjects = async (): Promise<Project[]> => {
   try {
     const userId = getUserId();
-    const projectsRef = collection(db, 'users', userId, 'projects');
+    const projectsRef = collection(db!, 'users', userId, 'projects');
     const q = query(projectsRef, orderBy('order', 'asc'));
     
     const snapshot = await getDocs(q);
@@ -140,7 +140,7 @@ export const loadProjects = async (): Promise<Project[]> => {
 export const deleteProjectFromFirebase = async (projectId: string): Promise<void> => {
   try {
     const userId = getUserId();
-    const projectRef = doc(db, 'users', userId, 'projects', projectId);
+    const projectRef = doc(db!, 'users', userId, 'projects', projectId);
     await deleteDoc(projectRef);
     console.log('Project deleted from Firebase:', projectId);
   } catch (error) {
@@ -153,7 +153,7 @@ export const deleteProjectFromFirebase = async (projectId: string): Promise<void
 export const saveFolder = async (folder: Folder): Promise<void> => {
   try {
     const userId = getUserId();
-    const folderRef = doc(db, 'users', userId, 'folders', folder.id);
+    const folderRef = doc(db!, 'users', userId, 'folders', folder.id);
     
     const folderData = {
       ...folder,
@@ -173,7 +173,7 @@ export const saveFolder = async (folder: Folder): Promise<void> => {
 export const loadFolders = async (): Promise<Folder[]> => {
   try {
     const userId = getUserId();
-    const foldersRef = collection(db, 'users', userId, 'folders');
+    const foldersRef = collection(db!, 'users', userId, 'folders');
     const q = query(foldersRef, orderBy('name', 'asc'));
     
     const snapshot = await getDocs(q);
@@ -207,7 +207,7 @@ export const loadFolders = async (): Promise<Folder[]> => {
 export const deleteFolderFromFirebase = async (folderId: string): Promise<void> => {
   try {
     const userId = getUserId();
-    const folderRef = doc(db, 'users', userId, 'folders', folderId);
+    const folderRef = doc(db!, 'users', userId, 'folders', folderId);
     await deleteDoc(folderRef);
     console.log('Folder deleted from Firebase:', folderId);
   } catch (error) {
@@ -220,7 +220,7 @@ export const deleteFolderFromFirebase = async (folderId: string): Promise<void> 
 export const saveTag = async (tag: Tag): Promise<void> => {
   try {
     const userId = getUserId();
-    const tagRef = doc(db, 'users', userId, 'tags', tag.id);
+    const tagRef = doc(db!, 'users', userId, 'tags', tag.id);
     
     const tagData = {
       ...tag,
@@ -238,7 +238,7 @@ export const saveTag = async (tag: Tag): Promise<void> => {
 export const loadTags = async (): Promise<Tag[]> => {
   try {
     const userId = getUserId();
-    const tagsRef = collection(db, 'users', userId, 'tags');
+    const tagsRef = collection(db!, 'users', userId, 'tags');
     const q = query(tagsRef, orderBy('name', 'asc'));
     
     const snapshot = await getDocs(q);
@@ -264,7 +264,7 @@ export const loadTags = async (): Promise<Tag[]> => {
 export const deleteTagFromFirebase = async (tagId: string): Promise<void> => {
   try {
     const userId = getUserId();
-    const tagRef = doc(db, 'users', userId, 'tags', tagId);
+    const tagRef = doc(db!, 'users', userId, 'tags', tagId);
     await deleteDoc(tagRef);
     console.log('Tag deleted from Firebase:', tagId);
   } catch (error) {
@@ -277,7 +277,7 @@ export const deleteTagFromFirebase = async (tagId: string): Promise<void> => {
 export const deleteNotesInProject = async (projectId: string): Promise<void> => {
   try {
     const userId = getUserId();
-    const notesRef = collection(db, 'users', userId, 'notes');
+    const notesRef = collection(db!, 'users', userId, 'notes');
     const q = query(notesRef, where('projectId', '==', projectId));
     
     const snapshot = await getDocs(q);
@@ -294,7 +294,7 @@ export const deleteNotesInProject = async (projectId: string): Promise<void> => 
 export const deleteNotesInFolder = async (folderId: string): Promise<void> => {
   try {
     const userId = getUserId();
-    const notesRef = collection(db, 'users', userId, 'notes');
+    const notesRef = collection(db!, 'users', userId, 'notes');
     const q = query(notesRef, where('folderId', '==', folderId));
     
     const snapshot = await getDocs(q);
@@ -313,7 +313,7 @@ export const deleteMultipleNotesFromFirebase = async (noteIds: string[]): Promis
   try {
     const userId = getUserId();
     const deletePromises = noteIds.map(noteId => {
-      const noteRef = doc(db, 'users', userId, 'notes', noteId);
+      const noteRef = doc(db!, 'users', userId, 'notes', noteId);
       return deleteDoc(noteRef);
     });
     

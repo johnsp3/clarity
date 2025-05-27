@@ -89,4 +89,29 @@
 
 .ProseMirror ul[data-type="taskList"] li > label > input {
   @apply mr-2;
+}
+
+/* Image styles */
+.ProseMirror img {
+  @apply max-w-full h-auto rounded-lg shadow-sm my-4 cursor-pointer;
+  width: 100% !important;
+  height: auto !important;
+}
+
+.ProseMirror img.ProseMirror-selectednode {
+  @apply ring-2 ring-blue-500 ring-opacity-50;
+}
+
+/* Drag and drop styles */
+.drag-over {
+  @apply relative;
+}
+
+.drag-over .ProseMirror {
+  @apply opacity-50;
+}
+
+/* Smooth transitions for drag states */
+.ProseMirror {
+  transition: opacity 0.2s ease-in-out;
 } 

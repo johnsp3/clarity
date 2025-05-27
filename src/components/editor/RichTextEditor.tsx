@@ -6,6 +6,7 @@ import {
   Save, Heading1, Heading2,
   Printer, Upload
 } from 'lucide-react'
+import { marked } from 'marked'
 
 import { Note } from '../../store/useStore'
 import { FormatBadge } from '../FormatBadge'
@@ -225,7 +226,7 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({ note, onUpdate, 
         mimeType = 'text/html'
         extension = 'html'
         break
-      case 'markdown':
+      case 'markdown': {
         // Export the beautiful rendered preview as Markdown
         // Use the preview HTML content and convert it to clean Markdown
         const previewHtmlForMarkdown = previewContentRef.current || content
@@ -233,7 +234,8 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({ note, onUpdate, 
         mimeType = 'text/markdown'
         extension = 'md'
         break
-      case 'txt':
+      }
+      case 'txt': {
         // For text export, convert HTML to plain text
         const tempDiv = document.createElement('div')
         tempDiv.innerHTML = previewHtml
@@ -242,6 +244,7 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({ note, onUpdate, 
         mimeType = 'text/plain'
         extension = 'txt'
         break
+      }
       case 'pdf':
         // For PDF, we'll use the print preview
         setShowPrintPreview(true)
@@ -656,9 +659,59 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({ note, onUpdate, 
               onRewrite={(newContent, format) => {
                 setContent(newContent)
                 onUpdate({ content: newContent })
+                
                 if (editor) {
-                  editor.commands.setContent(newContent)
+                  // For format conversions, we want to show the beautiful formatted result
+                  if (format) {
+                    console.log(`🎯 Converting ${format} to beautiful display in editor`)
+                    
+                    switch (format) {
+                      case 'markdown':
+                        // Convert Markdown to HTML for beautiful display
+                        try {
+                          const htmlContent = marked(newContent) as string
+                          editor.commands.setContent(htmlContent)
+                          console.log('✅ Markdown converted to beautiful HTML display')
+                        } catch (error) {
+                          console.error('Error converting Markdown:', error)
+                          editor.commands.setContent(newContent)
+                        }
+                        break
+                        
+                      case 'html':
+                      case 'rich':
+                      case 'rtf':
+                      case 'docx':
+                      case 'word':
+                        // These formats should already be in HTML or can be displayed as HTML
+                        editor.commands.setContent(newContent)
+                        console.log(`✅ ${format.toUpperCase()} content set for beautiful display`)
+                        break
+                        
+                      case 'plain': {
+                        // Convert plain text to formatted paragraphs
+                        const formattedPlainText = newContent
+                          .split('\n\n')
+                          .map(para => para.trim())
+                          .filter(para => para.length > 0)
+                          .map(para => `<p>${para.replace(/\n/g, '<br>')}</p>`)
+                          .join('')
+                        editor.commands.setContent(formattedPlainText)
+                        console.log('✅ Plain text converted to formatted paragraphs')
+                        break
+                      }
+                        
+                      default:
+                        // For other formats, use normal setContent
+                        editor.commands.setContent(newContent)
+                        break
+                    }
+                  } else {
+                    // No specific format, use normal setContent
+                    editor.commands.setContent(newContent)
+                  }
                 }
+                
                 // Set format after conversion if provided
                 if (format) {
                   setFormatAfterConversion(format as ContentFormat)

@@ -9,6 +9,8 @@ import Underline from '@tiptap/extension-underline';
 import TextAlign from '@tiptap/extension-text-align';
 import Color from '@tiptap/extension-color';
 import TextStyle from '@tiptap/extension-text-style';
+import Image from '@tiptap/extension-image';
+
 export const useNoteEditor = (
   content: string, 
   onChange: (content: string) => void
@@ -40,6 +42,14 @@ export const useNoteEditor = (
       Color.configure({
         types: ['textStyle'],
       }),
+      Image.configure({
+        inline: false,
+        allowBase64: true,
+        HTMLAttributes: {
+          class: 'max-w-full h-auto rounded-lg shadow-sm my-4',
+          style: 'width: 100%; height: auto;',
+        },
+      }),
     ],
     content,
     onUpdate: ({ editor }) => {
@@ -57,5 +67,9 @@ export const useNoteEditor = (
     },
     autofocus: false,
     editable: true,
+    // Parse content as HTML by default, but allow raw text preservation
+    parseOptions: {
+      preserveWhitespace: 'full',
+    },
   });
 }; 

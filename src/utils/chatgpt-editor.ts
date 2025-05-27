@@ -44,8 +44,11 @@ export const transformText = async (
 9. Ensure proper spacing and readability
 
 The result should be clean, well-structured Markdown that renders beautifully when previewed.`,
-      html: "Convert this text to clean, semantic HTML format with proper tags and structure",
-      plaintext: "Convert this to plain text, removing all formatting while preserving the content structure"
+      html: "Convert this text to clean, semantic HTML format with proper tags, headings, paragraphs, and structure. Use proper HTML5 semantic elements.",
+      plaintext: "Convert this to plain text, removing all formatting while preserving the content structure and readability",
+      rtf: "Convert this text to Rich Text Format with proper formatting, headings, and structure that will display beautifully",
+      docx: "Convert this text to Microsoft Word document format with proper headings, paragraphs, and professional formatting",
+      word: "Convert this text to Microsoft Word document format with proper headings, paragraphs, and professional formatting"
     }
     
     const systemPrompt = customPrompt || transformations[transformation]

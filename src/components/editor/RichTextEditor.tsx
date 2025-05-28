@@ -32,7 +32,7 @@ interface RichTextEditorProps {
 export const RichTextEditor: React.FC<RichTextEditorProps> = ({ note, onUpdate, onShowImport }) => {
   const [title, setTitle] = useState(note.title)
   const [content, setContent] = useState(note.content)
-  const [detectedFormat, setDetectedFormat] = useState<ContentFormat>('plain')
+  const [detectedFormat, setDetectedFormat] = useState<ContentFormat>(note.format || 'plain')
   const [showFormatBadge, setShowFormatBadge] = useState(false)
   const [showPreview, setShowPreview] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
@@ -130,11 +130,13 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({ note, onUpdate, 
   useEffect(() => {
     setTitle(note.title)
     setContent(note.content)
+    // Also update the format when note changes
+    setDetectedFormat(note.format || 'plain')
     // Update editor content when note changes
     if (editor && note.content !== content) {
       editor.commands.setContent(note.content || '')
     }
-  }, [note.id, note.title, note.content, editor, content])
+  }, [note.id, note.title, note.content, note.format, editor, content])
 
   // Calculate stats only (no automatic format detection)
   useEffect(() => {
@@ -150,6 +152,9 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({ note, onUpdate, 
   const setFormatAfterConversion = (format: ContentFormat) => {
     setDetectedFormat(format)
     setShowFormatBadge(true)
+    
+    // Update the note's format in the store
+    onUpdate({ format })
     
     // Hide badge after showing it
     setTimeout(() => {

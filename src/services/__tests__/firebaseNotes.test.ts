@@ -164,8 +164,15 @@ describe('Firebase Notes Service', () => {
 
       expect(mockDoc).toHaveBeenCalledWith(db, 'users', 'test-user-id', 'projects', 'project-1')
       expect(mockSetDoc).toHaveBeenCalledWith('doc-ref', expect.objectContaining({
-        ...mockProject,
-        userId: 'test-user-id'
+        id: mockProject.id,
+        name: mockProject.name,
+        color: mockProject.color,
+        icon: mockProject.icon,
+        description: mockProject.description,
+        createdAt: mockProject.createdAt,
+        order: mockProject.order,
+        userId: 'test-user-id',
+        updatedAt: expect.anything()
       }))
     })
 

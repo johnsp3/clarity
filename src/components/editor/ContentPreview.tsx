@@ -3,16 +3,6 @@ import { marked } from 'marked'
 import { ContentFormat } from '../../types/editor'
 import { PreviewHeader } from './preview/PreviewHeader'
 import { getPreviewClassName, getPreviewStyles } from './preview/previewStyles'
-import {
-  escapeHtml,
-  cleanWordContent,
-  parseRTFContent,
-  parseDocxContent,
-  formatJSONContent,
-  formatXMLContent,
-  formatCSVContent,
-  addImageErrorHandling
-} from './preview/formatters'
 
 interface ContentPreviewProps {
   content: string
@@ -37,88 +27,86 @@ export const ContentPreview: React.FC<ContentPreviewProps> = ({
     gfm: true
   })
 
+  // Helper function to escape HTML
+  const escapeHtml = (text: string): string => {
+    const div = document.createElement('div')
+    div.textContent = text
+    return div.innerHTML
+  }
+
+  // Add image error handling to rendered content
+  const addImageErrorHandling = (html: string): string => {
+    return html.replace(
+      /<img([^>]*)>/g,
+      '<img$1 onerror="this.onerror=null; this.src=\'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KICA8cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZjBmMGYwIi8+CiAgPHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIxOCIgZmlsbD0iIzk5OSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPkltYWdlIG5vdCBhdmFpbGFibGU8L3RleHQ+Cjwvc3ZnPg==\'; this.alt=\'Image not available\';">'
+    )
+  }
+
   useEffect(() => {
     if (!content) {
       setPreviewContent('')
       return
     }
 
-    console.log('🎨 Preview rendering content:', JSON.stringify(content.substring(0, 100)), 'as format:', format)
+    console.log('🎨 [ContentPreview] Rendering content as format:', format)
+    console.log('📄 [ContentPreview] Content preview:', content.substring(0, 200))
 
     let renderedContent = ''
     
-    switch (format) {
-      case 'markdown':
-        // Parse markdown to HTML
-        try {
-          console.log('📝 Parsing Markdown content:', content)
-          renderedContent = marked(content) as string
+    try {
+      switch (format) {
+        case 'markdown':
+          // Parse markdown to HTML
+          try {
+            console.log('📝 [ContentPreview] Parsing Markdown content')
+            
+            // Validate markdown content
+            if (typeof content !== 'string') {
+              throw new Error('Content must be a string for markdown parsing')
+            }
+            
+            renderedContent = marked(content) as string
+            
+            // Validate the parsed result
+            if (!renderedContent) {
+              throw new Error('Markdown parsing resulted in empty content')
+            }
+            
+            // Add image error handling
+            renderedContent = addImageErrorHandling(renderedContent)
+            
+            console.log('✅ [ContentPreview] Markdown successfully rendered')
+          } catch (error) {
+            console.error('❌ [ContentPreview] Markdown parsing error:', error)
+            renderedContent = `
+              <div class="error-preview">
+                <h3>Markdown Parsing Error</h3>
+                <p>Failed to parse the markdown content.</p>
+                <pre>${error instanceof Error ? error.message : 'Unknown error'}</pre>
+              </div>
+            `
+          }
+          break
           
-          // Add image error handling and fallback placeholders
-          renderedContent = addImageErrorHandling(renderedContent)
-          
-          console.log('✅ Markdown rendered to:', renderedContent.substring(0, 100) + '...')
-        } catch (error) {
-          console.error('Markdown parsing error:', error)
-          renderedContent = `<pre class="error-preview">Error parsing Markdown:\n${escapeHtml(content)}</pre>`
-        }
-        break
-        
-      case 'html':
-        // For HTML, render it directly (it's already HTML)
-        renderedContent = addImageErrorHandling(content)
-        break
-        
-      case 'rich':
-        // Rich text is already formatted HTML
-        renderedContent = addImageErrorHandling(content)
-        break
-
-      case 'word':
-        // Microsoft Word rich text - clean up and render
-        renderedContent = cleanWordContent(content)
-        break
-
-      case 'rtf':
-        // RTF format - show as formatted text with basic parsing
-        renderedContent = parseRTFContent(content)
-        break
-
-      case 'docx':
-        // DOCX/Word XML - extract and clean content
-        renderedContent = parseDocxContent(content)
-        break
-
-      case 'json':
-        // JSON format - pretty print with syntax highlighting
-        renderedContent = formatJSONContent(content)
-        break
-
-      case 'xml':
-        // XML format - pretty print with syntax highlighting
-        renderedContent = formatXMLContent(content)
-        break
-
-      case 'csv':
-        // CSV format - render as table
-        renderedContent = formatCSVContent(content)
-        break
-        
-      case 'code':
-        // Wrap code in pre/code tags for proper display
-        renderedContent = `<pre class="code-preview"><code>${escapeHtml(content)}</code></pre>`
-        break
-        
-      case 'plain':
-      default:
-        // For plain text, preserve line breaks and wrap in paragraphs
-        renderedContent = content
-          .split('\n\n')
-          .map(para => para.trim())
-          .filter(para => para.length > 0)
-          .map(para => `<p>${escapeHtml(para).replace(/\n/g, '<br>')}</p>`)
-          .join('\n')
-        break
+        default:
+          // For any other format, display as plain text
+          console.log('📄 [ContentPreview] Rendering as plain text (default)')
+          renderedContent = `<pre style="white-space: pre-wrap; font-family: inherit;">${escapeHtml(content)}</pre>`
+          break
+      }
+    } catch (error) {
+      console.error('❌ [ContentPreview] Unexpected error during rendering:', error)
+      renderedContent = `<div class="error-preview">
+        <h3>Preview Error</h3>
+        <p>An unexpected error occurred while rendering the preview.</p>
+        <p>${error instanceof Error ? error.message : 'Unknown error'}</p>
+      </div>`
+    }
+    
+    // Final validation
+    if (!renderedContent) {
+      console.warn('⚠️ [ContentPreview] Rendered content is empty, using fallback')
+      renderedContent = '<p class="text-gray-500">No content to preview</p>'
     }
     
     setPreviewContent(renderedContent)
@@ -127,6 +115,8 @@ export const ContentPreview: React.FC<ContentPreviewProps> = ({
     if (onContentUpdate) {
       onContentUpdate(renderedContent)
     }
+    
+    console.log('🎯 [ContentPreview] Preview update complete')
   }, [content, format, onContentUpdate])
 
   const handleCopy = async () => {

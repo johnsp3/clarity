@@ -72,6 +72,10 @@ export const TiptapEditor: React.FC<TiptapEditorProps> = ({ editor }) => {
     }
   }, [editor]);
 
+  if (!editor) {
+    return null
+  }
+
   return (
     <div 
       className={`relative ${isDragOver ? 'drag-over' : ''}`}
@@ -95,7 +99,7 @@ export const TiptapEditor: React.FC<TiptapEditorProps> = ({ editor }) => {
       
       <EditorContent 
         editor={editor} 
-        className="prose prose-sm max-w-none focus:outline-none min-h-full"
+        className="prose prose-sm max-w-none px-8 pb-8 focus:outline-none min-h-[400px]"
       />
     </div>
   );

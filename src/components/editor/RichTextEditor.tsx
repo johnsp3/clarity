@@ -6,7 +6,6 @@ import {
   Save, Heading1, Heading2,
   Printer, Upload
 } from 'lucide-react'
-import { marked } from 'marked'
 
 import { Note } from '../../store/useStore'
 import { FormatBadge } from '../FormatBadge'
@@ -41,6 +40,7 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({ note, onUpdate, 
   const [showPrintPreview, setShowPrintPreview] = useState(false)
   const [wordCount, setWordCount] = useState(0)
   const [charCount, setCharCount] = useState(0)
+  const [previewOnlyContent, setPreviewOnlyContent] = useState<string | null>(null)
 
   const previewContentRef = useRef<string>('')
 
@@ -723,67 +723,62 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({ note, onUpdate, 
             <AIEdit 
               content={content}
               onRewrite={(newContent, format) => {
-                setContent(newContent)
-                onUpdate({ content: newContent })
+                console.log(`🎯 [RichTextEditor] AI transformation received:`, {
+                  format,
+                  contentLength: newContent.length,
+                  contentPreview: newContent.substring(0, 100)
+                })
                 
-                if (editor) {
-                  // For format conversions, we want to show the beautiful formatted result
-                  if (format) {
-                    console.log(`🎯 Converting ${format} to beautiful display in editor`)
+                // For markdown transformations, update the content
+                if (format === 'markdown') {
+                  setContent(newContent)
+                  onUpdate({ content: newContent })
+                  
+                  // Clear any preview-only content
+                  setPreviewOnlyContent(null)
+                  
+                  if (editor) {
+                    console.log(`📝 [RichTextEditor] Updating content for markdown transformation`)
                     
-                    switch (format) {
-                      case 'markdown':
-                        // Convert Markdown to HTML for beautiful display
-                        try {
-                          const htmlContent = marked(newContent) as string
-                          editor.commands.setContent(htmlContent)
-                          console.log('✅ Markdown converted to beautiful HTML display')
-                        } catch (error) {
-                          console.error('Error converting Markdown:', error)
-                          editor.commands.setContent(newContent)
-                        }
-                        break
-                        
-                      case 'html':
-                      case 'beautifulhtml':
-                      case 'rich':
-                      case 'rtf':
-                      case 'docx':
-                      case 'word':
-                        // These formats should already be in HTML or can be displayed as HTML
-                        editor.commands.setContent(newContent)
-                        console.log(`✅ ${format.toUpperCase()} content set for beautiful display`)
-                        break
-                        
-                      case 'plain': {
-                        // Convert plain text to formatted paragraphs
-                        const formattedPlainText = newContent
-                          .split('\n\n')
-                          .map(para => para.trim())
-                          .filter(para => para.length > 0)
-                          .map(para => `<p>${para.replace(/\n/g, '<br>')}</p>`)
-                          .join('')
-                        editor.commands.setContent(formattedPlainText)
-                        console.log('✅ Plain text converted to formatted paragraphs')
-                        break
+                    // Clear the editor first to ensure clean state
+                    editor.commands.clearContent()
+                    
+                    // Insert the transformed content
+                    editor.commands.insertContent({
+                      type: 'paragraph',
+                      content: [{
+                        type: 'text',
+                        text: newContent
+                      }]
+                    })
+                    
+                    // Ensure the editor doesn't try to parse it as HTML
+                    editor.setOptions({
+                      parseOptions: {
+                        preserveWhitespace: 'full'
                       }
-                        
-                      default:
-                        // For other formats, use normal setContent
-                        editor.commands.setContent(newContent)
-                        break
-                    }
-                  } else {
-                    // No specific format, use normal setContent
+                    })
+                    
+                    console.log('✅ [RichTextEditor] Content updated in editor')
+                  }
+                  
+                  // Set format after conversion
+                  setFormatAfterConversion('markdown' as ContentFormat)
+                  
+                  // Automatically show preview
+                  if (!showPreview) {
+                    console.log('👁️ [RichTextEditor] Auto-enabling preview for markdown transformation')
+                    setShowPreview(true)
+                  }
+                } else {
+                  // For other transformations (tone changes, etc), use normal content setting
+                  setContent(newContent)
+                  onUpdate({ content: newContent })
+                  setPreviewOnlyContent(null)
+                  
+                  if (editor) {
                     editor.commands.setContent(newContent)
                   }
-                }
-                
-                // Set format after conversion if provided
-                if (format) {
-                  // For beautifulhtml, set format as html
-                  const displayFormat = format === 'beautifulhtml' ? 'html' : format
-                  setFormatAfterConversion(displayFormat as ContentFormat)
                 }
               }}
             />
@@ -887,7 +882,7 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({ note, onUpdate, 
 
         {/* Preview Panel */}
         <ContentPreview 
-          content={content}
+          content={previewOnlyContent || content}
           format={detectedFormat}
           isVisible={showPreview}
           onContentUpdate={updatePreviewContent}

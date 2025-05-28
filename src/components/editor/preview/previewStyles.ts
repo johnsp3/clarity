@@ -433,11 +433,36 @@ export function getPreviewStyles(): string {
     .error-preview {
       background-color: #FEF2F2;
       color: #991B1B;
-      padding: 1em;
-      border-radius: 6px;
-      font-family: 'SF Mono', Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
-      font-size: 13px;
+      padding: 1.5em;
+      border-radius: 8px;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans', Helvetica, Arial, sans-serif;
+      font-size: 14px;
       line-height: 1.5;
+      border: 1px solid #FCA5A5;
+    }
+    
+    .error-preview h3 {
+      margin: 0 0 0.5em 0;
+      font-size: 1.1em;
+      font-weight: 600;
+      color: #7F1D1D;
+    }
+    
+    .error-preview p {
+      margin: 0 0 1em 0;
+      color: #991B1B;
+    }
+    
+    .error-preview pre {
+      margin: 0;
+      padding: 1em;
+      background-color: #FEE2E2;
+      border-radius: 4px;
+      overflow-x: auto;
+      font-family: 'SF Mono', Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
+      font-size: 12px;
+      color: #7F1D1D;
+      border: 1px solid #FECACA;
     }
   `
 } 

@@ -570,17 +570,35 @@ describe('useStore', () => {
       expect(result.current.tags[0].name).toBe('important')
     })
 
-    it('should merge tags', () => {
+    it('should merge tags', async () => {
       const { result } = renderHook(() => useStore())
+      
+      // Start with a clean state
+      expect(result.current.tags).toHaveLength(0)
       
       // Add tags
       let fromTag: any
       let toTag: any
       
       act(() => {
+        // Add tags one by one to ensure they're properly created
         fromTag = result.current.addTag('urgent')
+      })
+      
+      // Small delay to ensure unique timestamp
+      await new Promise(resolve => setTimeout(resolve, 10))
+      
+      act(() => {
         toTag = result.current.addTag('important')
       })
+
+      // Verify we have 2 tags
+      expect(result.current.tags).toHaveLength(2)
+      expect(fromTag).toBeDefined()
+      expect(toTag).toBeDefined()
+      expect(fromTag.id).toBeDefined()
+      expect(toTag.id).toBeDefined()
+      expect(fromTag.id).not.toBe(toTag.id)
 
       // Add note with fromTag
       act(() => {
@@ -609,13 +627,22 @@ describe('useStore', () => {
         })
       })
 
+      // Verify note has the tag
+      expect(result.current.notes).toHaveLength(1)
+      expect(result.current.notes[0].tags).toHaveLength(1)
+      expect(result.current.notes[0].tags).toContain(fromTag.id)
+
       // Merge tags
       act(() => {
         result.current.mergeTag(fromTag.id, toTag.id)
       })
 
+      // After merging, we should have only 1 tag (the toTag)
       expect(result.current.tags).toHaveLength(1)
       expect(result.current.tags[0].id).toBe(toTag.id)
+      
+      // The note should now have the toTag instead of fromTag
+      expect(result.current.notes[0].tags).toHaveLength(1)
       expect(result.current.notes[0].tags).toContain(toTag.id)
       expect(result.current.notes[0].tags).not.toContain(fromTag.id)
     })

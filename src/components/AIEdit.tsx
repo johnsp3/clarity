@@ -8,23 +8,15 @@ import {
   FocusManager
 } from '../utils/accessibility'
 import { 
-  Sparkles,
   ChevronDown,
-  Smile,
-  Briefcase,
-  Scissors,
-  CheckCircle,
-  Edit3,
+  Sparkles,
   Zap,
-  List,
-  FileDown,
-  Lightbulb,
-  Target,
+  Briefcase,
+  Smile,
   Hash,
-  Code,
-  FileText,
-  Loader2,
-  TestTube
+  Languages,
+  CheckCircle,
+  Loader2
 } from 'lucide-react'
 
 interface AIEditProps {
@@ -238,17 +230,15 @@ export const AIEdit: React.FC<AIEditProps> = ({ content, onRewrite }) => {
       { key: 'grammar', label: 'Fix Grammar & Spelling', icon: CheckCircle, emoji: '✓' }
     ],
     enhance: [
-      { key: 'concise', label: 'Make it Concise', icon: Scissors, emoji: '✂️' },
+      { key: 'concise', label: 'Make it Concise', icon: Languages, emoji: '✂️' },
       { key: 'expand', label: 'Expand with Details', icon: Zap, emoji: '⚡' },
-      { key: 'bullets', label: 'Convert to Bullets', icon: List, emoji: '📝' },
-      { key: 'summarize', label: 'Summarize', icon: FileDown, emoji: '📄' },
-      { key: 'improve', label: 'Improve Clarity', icon: Lightbulb, emoji: '💡' },
-      { key: 'simplify', label: 'Simplify Language', icon: Target, emoji: '🎯' }
+      { key: 'bullets', label: 'Convert to Bullets', icon: Languages, emoji: '📝' },
+      { key: 'summarize', label: 'Summarize', icon: Languages, emoji: '📄' },
+      { key: 'improve', label: 'Improve Clarity', icon: Languages, emoji: '💡' },
+      { key: 'simplify', label: 'Simplify Language', icon: Languages, emoji: '🎯' }
     ],
     presets: [
-      { key: 'markdown', label: 'Beautiful Markdown Format', icon: Hash, emoji: '✨' },
-      { key: 'plain', label: 'Beautiful Plain Text Format', icon: FileText, emoji: '📄' },
-      { key: 'beautifulhtml', label: 'Beautiful HTML Format', icon: Code, emoji: '🎨' }
+      { key: 'markdown', label: 'Beautiful Markdown Format', icon: Hash, emoji: '✨' }
     ]
   }
 
@@ -256,8 +246,8 @@ export const AIEdit: React.FC<AIEditProps> = ({ content, onRewrite }) => {
     { key: 'presets' as const, label: 'Presets', icon: Hash },
     { key: 'tone' as const, label: 'Tone & Style', icon: Smile },
     { key: 'enhance' as const, label: 'Enhance', icon: Zap },
-    { key: 'custom' as const, label: 'Custom', icon: Edit3 },
-    { key: 'test' as const, label: 'Test', icon: TestTube }
+    { key: 'custom' as const, label: 'Custom', icon: Languages },
+    { key: 'test' as const, label: 'Test', icon: Languages }
   ]
 
   return (
@@ -374,7 +364,7 @@ export const AIEdit: React.FC<AIEditProps> = ({ content, onRewrite }) => {
                       </>
                     ) : (
                       <>
-                        <TestTube className="w-4 h-4" aria-hidden="true" />
+                        <Languages className="w-4 h-4" aria-hidden="true" />
                         Test API Connection
                       </>
                     )}

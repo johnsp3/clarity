@@ -1,5 +1,6 @@
 import { initializeApp, deleteApp } from 'firebase/app';
 import { getFirestore, doc, getDoc } from 'firebase/firestore';
+import { validateApiKey } from '../services/openai-service';
 
 interface ValidationResult {
   success: boolean;
@@ -13,8 +14,10 @@ interface ValidationResults {
   perplexity: ValidationResult;
 }
 
+import type { FirebaseApp } from 'firebase/app';
+
 export const validateFirebaseConnection = async (configString: string): Promise<ValidationResult> => {
-  let testApp: any = null;
+  let testApp: FirebaseApp | null = null;
   
   try {
     console.log('Testing Firebase connection...');
@@ -48,9 +51,10 @@ export const validateFirebaseConnection = async (configString: string): Promise<
       // Use a unique name to avoid conflicts
       const testAppName = `test-app-${Date.now()}`;
       testApp = initializeApp(config, testAppName);
-    } catch (error: any) {
+    } catch (error) {
+      const err = error as Error
       // Check for common errors
-      if (error.message?.includes('API key')) {
+      if (err.message?.includes('API key')) {
         return {
           success: false,
           message: 'Invalid API key',
@@ -61,7 +65,7 @@ export const validateFirebaseConnection = async (configString: string): Promise<
       return {
         success: false,
         message: 'Failed to initialize Firebase',
-        details: error.message || 'Could not connect to Firebase with the provided configuration.'
+        details: err.message || 'Could not connect to Firebase with the provided configuration.'
       };
     }
 
@@ -87,28 +91,29 @@ export const validateFirebaseConnection = async (configString: string): Promise<
         message: 'Firebase connection successful',
         details: 'Successfully connected to your Firebase project.'
       };
-    } catch (error: any) {
+    } catch (error) {
+      const err = error as { code?: string; message?: string; isExpected?: boolean }
       // Check for specific error types
-      if (error.code === 'failed-precondition' || error.message?.includes('Firestore has not been initialized')) {
+      if (err.code === 'failed-precondition' || err.message?.includes('Firestore has not been initialized')) {
         return {
           success: false,
           message: 'Firestore not enabled',
           details: 'Please enable Firestore in your Firebase Console: Firebase Console → Build → Firestore Database → Create Database'
         };
-      } else if (error.code === 'permission-denied' || error.isExpected) {
+              } else if (err.code === 'permission-denied' || err.isExpected) {
         // This is actually good - means we connected but don't have permissions yet
         return {
           success: true,
           message: 'Firebase connection successful',
           details: 'Connected to Firebase. Security rules will be configured in the next step.'
         };
-      } else if (error.code === 'unavailable') {
+      } else if (err.code === 'unavailable') {
         return {
           success: false,
           message: 'Network error',
           details: 'Could not reach Firebase services. Please check your internet connection and try again.'
         };
-      } else if (error.message?.includes('projectId')) {
+      } else if (err.message?.includes('projectId')) {
         return {
           success: false,
           message: 'Invalid project ID',
@@ -118,15 +123,16 @@ export const validateFirebaseConnection = async (configString: string): Promise<
         return {
           success: false,
           message: 'Firebase connection failed',
-          details: error.message || 'Could not connect to Firebase. Please check your configuration and try again.'
+          details: err.message || 'Could not connect to Firebase. Please check your configuration and try again.'
         };
       }
     }
-  } catch (error: any) {
+  } catch (error) {
+    const err = error as Error
     return {
       success: false,
       message: 'Unexpected error',
-      details: error.message || 'An unexpected error occurred while testing the Firebase connection.'
+      details: err.message || 'An unexpected error occurred while testing the Firebase connection.'
     };
   } finally {
     // Clean up the test app
@@ -142,79 +148,21 @@ export const validateFirebaseConnection = async (configString: string): Promise<
 
 export const validateChatGPTConnection = async (apiKey: string): Promise<ValidationResult> => {
   try {
-    console.log('Testing ChatGPT API connection...');
-    
-    if (!apiKey || !apiKey.trim()) {
-      return {
-        success: false,
-        message: 'No API key provided',
-        details: 'Please enter your OpenAI API key.'
-      };
-    }
-
-    if (!apiKey.startsWith('sk-')) {
-      return {
-        success: false,
-        message: 'Invalid API key format',
-        details: 'OpenAI API keys should start with "sk-". Please check your API key.'
-      };
-    }
-
-    // Test the API key with a minimal request
-    const response = await fetch('https://api.openai.com/v1/models', {
-      method: 'GET',
-      headers: {
-        'Authorization': `Bearer ${apiKey}`,
-        'Content-Type': 'application/json'
-      },
-    });
-
-    if (response.ok) {
-      return {
-        success: true,
-        message: 'ChatGPT API connection successful',
-        details: 'Successfully connected to OpenAI API. Your API key is valid.'
-      };
-    } else if (response.status === 401) {
-      const errorData = await response.json().catch(() => ({}));
-      return {
-        success: false,
-        message: 'Invalid API key',
-        details: errorData.error?.message || 'The API key is invalid or has been revoked. Please check your OpenAI account.'
-      };
-    } else if (response.status === 429) {
-      return {
-        success: false,
-        message: 'Rate limit exceeded',
-        details: 'Your API key has exceeded its rate limit. This might indicate the key is valid but has quota issues.'
-      };
-    } else if (response.status === 403) {
-      return {
-        success: false,
-        message: 'Access forbidden',
-        details: 'Your API key does not have access to the requested resource. Please check your OpenAI account permissions.'
-      };
-    } else {
-      const errorData = await response.json().catch(() => ({}));
-      return {
-        success: false,
-        message: 'API connection failed',
-        details: errorData.error?.message || `Failed to connect to OpenAI API. Status: ${response.status}`
-      };
-    }
-  } catch (error: any) {
-    if (error.name === 'TypeError' && error.message.includes('fetch')) {
-      return {
-        success: false,
-        message: 'Network error',
-        details: 'Could not reach OpenAI API. Please check your internet connection and firewall settings.'
-      };
-    }
+    console.log('Testing ChatGPT API connection with GPT-4o...');
+    const result = await validateApiKey(apiKey);
     
     return {
+      success: result.success,
+      message: result.message,
+      details: result.details
+    };
+  } catch (error) {
+    console.error('ChatGPT API validation error:', error);
+    const err = error as Error
+    return {
       success: false,
-      message: 'Unexpected error',
-      details: error.message || 'An unexpected error occurred while testing the ChatGPT API connection.'
+      message: 'Validation failed',
+      details: err.message || 'An unexpected error occurred while testing the ChatGPT API connection.'
     };
   }
 };
@@ -291,8 +239,9 @@ export const validatePerplexityConnection = async (apiKey: string): Promise<Vali
         details: errorData.error?.message || `Failed to connect to Perplexity API. Status: ${response.status}`
       };
     }
-  } catch (error: any) {
-    if (error.name === 'TypeError' && error.message.includes('fetch')) {
+  } catch (error) {
+    const err = error as Error
+    if (err.name === 'TypeError' && err.message?.includes('fetch')) {
       return {
         success: false,
         message: 'Network error',
@@ -303,7 +252,7 @@ export const validatePerplexityConnection = async (apiKey: string): Promise<Vali
     return {
       success: false,
       message: 'Unexpected error',
-      details: error.message || 'An unexpected error occurred while testing the Perplexity API connection.'
+      details: err.message || 'An unexpected error occurred while testing the Perplexity API connection.'
     };
   }
 };

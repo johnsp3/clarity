@@ -3,6 +3,7 @@ import { Plus } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useStore } from '../store/useStore'
 import { Button } from './Button'
+import { parseNotePreview, calculateNoteMetadata } from '../utils/notePreviewParser'
 
 export const NoteList: React.FC = () => {
   const {
@@ -15,9 +16,11 @@ export const NoteList: React.FC = () => {
   const notes = filteredNotes()
 
   const handleCreateNote = () => {
+    const content = ''
+    const createdAt = new Date()
     addNote({
       title: 'Untitled Note',
-      content: '',
+      content,
       projectId: null,
       folderId: null,
       tags: [],
@@ -25,6 +28,8 @@ export const NoteList: React.FC = () => {
       hasImages: false,
       hasCode: false,
       format: 'markdown',
+      preview: parseNotePreview(content),
+      metadata: calculateNoteMetadata(content, createdAt)
     })
   }
 

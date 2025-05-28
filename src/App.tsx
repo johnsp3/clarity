@@ -5,21 +5,24 @@ import { EnhancedSidebar } from './components/EnhancedSidebar'
 import { EnhancedNoteList } from './components/EnhancedNoteList'
 import { Editor } from './components/Editor'
 import { CommandPalette } from './components/CommandPalette'
+import { ErrorBoundary } from './components/ErrorBoundary'
+import { SkipLinks } from './components/SkipLinks'
 
 import { SearchPanel } from './components/SearchPanel'
 import { SettingsPanel } from './components/SettingsPanel'
 import { ImportManager } from './components/ImportManager'
 
-import { useStore } from './store/useStore'
+import { useStore, migrateExistingNotes } from './store/useStore'
 import { onAuthStateChanged } from 'firebase/auth'
 import { Search, Settings, Plus } from 'lucide-react'
+
 
 function App() {
   const [isConfigured, setIsConfigured] = useState(false);
   const [loading, setLoading] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [authLoading, setAuthLoading] = useState(true);
-  const [currentUser, setCurrentUser] = useState<any>(null);
+  const [currentUser, setCurrentUser] = useState<{ email?: string | null; uid: string } | null>(null);
   const [showSearch, setShowSearch] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [showImport, setShowImport] = useState(false);
@@ -42,6 +45,8 @@ function App() {
       // Remove the reset parameter from URL
       window.history.replaceState({}, document.title, window.location.pathname);
     }
+
+
     
     // Check if app is configured
     const configured = isFirebaseConfigured();
@@ -61,6 +66,8 @@ function App() {
           // Load data from Firebase when user is authenticated
           try {
             await loadDataFromFirebase();
+            // Run migration after data is loaded
+            await migrateExistingNotes();
           } catch (error) {
             console.error('Failed to load data:', error);
           }
@@ -91,18 +98,19 @@ function App() {
       const user = await signInWithGoogle();
       console.log('Sign in successful:', user.email);
       // The onAuthStateChanged listener will handle the rest
-    } catch (error: any) {
+    } catch (error) {
       console.error('Sign in error:', error);
       setAuthLoading(false);
       
+      const authError = error as { code?: string; message?: string }
       // Check for specific error types
-      if (error.code === 'auth/popup-closed-by-user') {
+      if (authError.code === 'auth/popup-closed-by-user') {
         // User closed the popup, no need to show error
         return;
       }
       
       // Show error to user
-      alert(error?.message || 'Sign in failed');
+      alert(authError?.message || 'Sign in failed');
     }
   };
 
@@ -123,6 +131,18 @@ function App() {
       hasImages: false,
       hasCode: false,
       format: 'markdown',
+      preview: [],
+      metadata: {
+        wordCount: 0,
+        lastEditedRelative: 'just now',
+        hasCheckboxes: false,
+        taskCount: 0,
+        completedTasks: 0,
+        completionPercentage: 0,
+        hasAttachments: false,
+        hasCode: false,
+        hasLinks: false
+      }
     });
   };
 
@@ -223,60 +243,75 @@ function App() {
   }
 
   return (
-    <div className="flex h-screen bg-[var(--bg-secondary)] overflow-hidden">
-      <EnhancedSidebar 
-        onShowSearch={() => setShowSearch(true)}
-        userEmail={currentUser?.email || ''}
-        onSignOut={handleSignOut}
-      />
-      <EnhancedNoteList />
-      <div className="flex-1 flex flex-col min-h-0">
-        {/* Premium Enterprise Top Navigation Bar */}
-        <div className="h-[56px] bg-[var(--bg-primary)] border-b border-[var(--border-light)] flex items-center justify-between px-8 shadow-[var(--shadow-xs)] flex-shrink-0">
-          <div className="flex items-center gap-8">
-            <h1 className="text-apple-title-sm text-gradient-primary">Clarity</h1>
-            
-            {/* Premium Integrated Search Bar */}
-            <button
-              onClick={() => setCommandPaletteOpen(true)}
-              className="search-apple flex items-center gap-3 hover-lift"
-            >
-              <Search size={16} className="text-[var(--text-tertiary)]" />
-              <span className="flex-1 text-left text-[var(--text-secondary)]">Search notes, projects...</span>
-              <span className="text-[13px] text-[var(--text-tertiary)] bg-[var(--bg-hover)] px-2 py-1 rounded font-medium">⌘K</span>
-            </button>
+    <>
+      <SkipLinks />
+      <div className="flex h-screen bg-[var(--bg-secondary)] overflow-hidden">
+        <ErrorBoundary level="section" isolate>
+          <div id="sidebar-navigation">
+            <EnhancedSidebar 
+              onShowSearch={() => setShowSearch(true)}
+              userEmail={currentUser?.email || ''}
+              onSignOut={handleSignOut}
+            />
           </div>
+        </ErrorBoundary>
+        <ErrorBoundary level="section" isolate>
+          <div id="notes-list">
+            <EnhancedNoteList />
+          </div>
+        </ErrorBoundary>
+        <div className="flex-1 flex flex-col min-h-0">
+          {/* Premium Enterprise Top Navigation Bar */}
+          <header className="h-[56px] bg-[var(--bg-primary)] border-b border-[var(--border-light)] flex items-center justify-between px-8 shadow-[var(--shadow-xs)] flex-shrink-0" role="banner">
+            <div className="flex items-center gap-8">
+              <h1 className="text-apple-title-sm text-gradient-primary">Clarity</h1>
+              
+              {/* Premium Integrated Search Bar */}
+              <button
+                onClick={() => setCommandPaletteOpen(true)}
+                className="search-apple flex items-center gap-3 hover-lift"
+                aria-label="Open command palette to search notes and projects"
+              >
+                <Search size={16} className="text-[var(--text-tertiary)]" aria-hidden="true" />
+                <span className="flex-1 text-left text-[var(--text-secondary)]">Search notes, projects...</span>
+                <span className="text-[13px] text-[var(--text-tertiary)] bg-[var(--bg-hover)] px-2 py-1 rounded font-medium" aria-label="Keyboard shortcut Command K">⌘K</span>
+              </button>
+            </div>
+            
+            <div className="flex items-center gap-3">
+              
+              {/* Settings Button */}
+              <button
+                onClick={() => setShowSettings(true)}
+                className="btn-apple-icon hover-lift"
+                title="Settings"
+                aria-label="Open settings"
+              >
+                <Settings size={16} aria-hidden="true" />
+              </button>
+              
+              {/* Premium Create Button */}
+              <button
+                onClick={handleCreateNote}
+                className="btn-apple-primary hover-lift"
+                aria-label="Create new note"
+              >
+                <Plus size={16} className="mr-2" aria-hidden="true" />
+                Create Note
+              </button>
+            </div>
+          </header>
           
-          <div className="flex items-center gap-3">
-            
-            {/* Settings Button */}
-            <button
-              onClick={() => setShowSettings(true)}
-              className="btn-apple-icon hover-lift"
-              title="Settings"
-            >
-              <Settings size={16} />
-            </button>
-            
-            {/* Premium Create Button */}
-            <button
-              onClick={handleCreateNote}
-              className="btn-apple-primary hover-lift"
-            >
-              <Plus size={16} className="mr-2" />
-              Create Note
-            </button>
-          </div>
+          {/* Editor content */}
+          <main id="main-content" className="flex-1 bg-[var(--bg-primary)] min-h-0 overflow-hidden" role="main">
+            <ErrorBoundary level="section" isolate>
+              <Editor 
+                onShowImport={() => setShowImport(true)}
+                onExportNotes={handleExportNotes}
+              />
+            </ErrorBoundary>
+          </main>
         </div>
-        
-        {/* Editor content */}
-        <div className="flex-1 bg-[var(--bg-primary)] min-h-0 overflow-hidden">
-          <Editor 
-            onShowImport={() => setShowImport(true)}
-            onExportNotes={handleExportNotes}
-          />
-        </div>
-      </div>
       <CommandPalette />
       <SearchPanel
         isOpen={showSearch}
@@ -302,6 +337,7 @@ function App() {
         onOpenChange={setShowImport}
       />
     </div>
+    </>
   );
 }
 

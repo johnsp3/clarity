@@ -1,7 +1,6 @@
-import React, { memo } from 'react'
-import { Note } from '../store/useStore'
-import { formatDistanceToNow } from 'date-fns'
-import { FileText, Image, Code, Star } from 'lucide-react'
+import React, { memo, useState } from 'react'
+import { Note, useStore } from '../store/useStore'
+import { Clock, Hash, FileText, CheckSquare, Code, Link2, List, Star } from 'lucide-react'
 
 interface MemoizedNoteCardProps {
   note: Note
@@ -22,33 +21,36 @@ const MemoizedNoteCard: React.FC<MemoizedNoteCardProps> = memo(({
   onToggleSelection,
   onToggleFavorite
 }) => {
-  const getPreviewText = (content: string): string => {
-    // Remove HTML tags and get first 100 characters
-    const plainText = content.replace(/<[^>]*>/g, '').trim()
-    return plainText.length > 100 ? plainText.substring(0, 100) + '...' : plainText
-  }
+  const [isHovered, setIsHovered] = useState(false)
+  const tags = useStore(state => state.tags)
 
-  const formatDate = (date: Date): string => {
-    try {
-      return formatDistanceToNow(date, { addSuffix: true })
-    } catch {
-      return 'Unknown'
-    }
-  }
+  // Get tag objects for this note
+  const noteTags = note.tags
+    .map(tagId => tags.find(tag => tag.id === tagId))
+    .filter((tag): tag is NonNullable<typeof tag> => tag !== undefined)
 
   return (
     <div
-      className={`note-card group relative ${isActive ? 'note-card-active' : ''}`}
+      className={`
+        group relative p-4 mb-3 bg-white rounded-lg border transition-all duration-200 cursor-pointer
+        ${isActive 
+          ? 'border-cyan-500 shadow-lg shadow-cyan-500/10 ring-2 ring-cyan-500/20' 
+          : 'border-gray-200 hover:border-gray-300'
+        }
+        ${isHovered ? 'transform -translate-y-0.5 shadow-md' : 'shadow-sm'}
+      `}
       onClick={onClick}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
     >
       {/* Selection checkbox */}
-      <div className="absolute top-3 left-3 opacity-0 group-hover:opacity-100 transition-opacity">
+      <div className="absolute top-4 left-4 opacity-0 group-hover:opacity-100 transition-opacity">
         <input
           type="checkbox"
           checked={isSelected}
           onChange={onToggleSelection}
           onClick={(e) => e.stopPropagation()}
-          className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500"
+          className="w-4 h-4 text-cyan-600 bg-gray-100 border-gray-300 rounded focus:ring-cyan-500"
         />
       </div>
 
@@ -58,67 +60,117 @@ const MemoizedNoteCard: React.FC<MemoizedNoteCardProps> = memo(({
           e.stopPropagation()
           onToggleFavorite()
         }}
-        className={`absolute top-3 right-3 p-1 rounded transition-all ${
+        className={`absolute top-4 right-4 p-1 rounded transition-all ${
           isFavorite 
             ? 'text-yellow-500 opacity-100' 
-            : 'text-gray-400 opacity-0 group-hover:opacity-100'
+            : 'text-gray-400 opacity-0 hover:opacity-100'
         }`}
       >
-        <Star size={14} fill={isFavorite ? 'currentColor' : 'none'} />
+        <Star size={16} fill={isFavorite ? 'currentColor' : 'none'} />
       </button>
 
-      {/* Note content */}
-      <div className="pl-6 pr-8">
-        <div className="flex items-start justify-between mb-2">
-          <h3 className={`font-medium text-[15px] leading-tight ${
-            note.titleColor ? `text-[${note.titleColor}]` : 'text-[#1D1D1F]'
-          }`}>
-            {note.title || 'Untitled'}
-          </h3>
+      {/* Title */}
+      <h3 className="font-semibold text-gray-900 mb-2 flex items-center justify-between pr-8">
+        <span style={{ color: note.titleColor || undefined }}>
+          {note.title || 'Untitled'}
+        </span>
+        {note.metadata?.hasAttachments && <FileText className="w-4 h-4 text-gray-400" />}
+      </h3>
+      
+      {/* Rich Preview Content */}
+      {note.preview && note.preview.length > 0 && (
+        <div className="text-sm text-gray-600 space-y-1.5 mb-3">
+          {note.preview.map((block, index) => {
+            switch (block.type) {
+              case 'text':
+                return (
+                  <p key={index} className="line-clamp-2">
+                    {/* Parse bold text */}
+                    {block.content?.split(/(\*\*.*?\*\*)/g).map((part, i) => {
+                      if (part.startsWith('**') && part.endsWith('**')) {
+                        return <strong key={i} className="text-gray-800 font-medium">{part.slice(2, -2)}</strong>
+                      }
+                      return <span key={i}>{part}</span>
+                    })}
+                  </p>
+                )
+              case 'checklist':
+                return (
+                  <div key={index} className="flex items-center gap-2">
+                    <CheckSquare className="w-3.5 h-3.5 text-cyan-500 flex-shrink-0" />
+                    <span className="text-gray-700">
+                      {block.completed}/{block.total} tasks
+                      {block.completed === block.total && (block.total ?? 0) > 0 && 
+                        <span className="ml-1 text-green-600 text-xs">✓ Complete</span>
+                      }
+                    </span>
+                  </div>
+                )
+              case 'code':
+                return (
+                  <div key={index} className="flex items-center gap-2">
+                    <Code className="w-3.5 h-3.5 text-purple-500 flex-shrink-0" />
+                    <code className="text-xs bg-gray-100 px-1.5 py-0.5 rounded text-gray-700 font-mono">
+                      {block.language}: {block.preview}
+                    </code>
+                  </div>
+                )
+              case 'list':
+                return (
+                  <div key={index} className="flex items-center gap-2">
+                    <List className="w-3.5 h-3.5 text-blue-500 flex-shrink-0" />
+                    <span className="text-gray-700">{block.items} items</span>
+                  </div>
+                )
+              case 'link':
+                return (
+                  <div key={index} className="flex items-center gap-2">
+                    <Link2 className="w-3.5 h-3.5 text-blue-500 flex-shrink-0" />
+                    <span className="text-blue-600 text-xs truncate">{block.url}</span>
+                  </div>
+                )
+              default:
+                return null
+            }
+          })}
         </div>
-
-        {/* Preview text */}
-        {note.content && (
-          <p className="text-[13px] text-[#86868B] leading-relaxed mb-3 line-clamp-2">
-            {getPreviewText(note.content)}
-          </p>
-        )}
-
-        {/* Metadata */}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            {/* Content indicators */}
-            <div className="flex items-center gap-1">
-              <FileText size={12} className="text-[#86868B]" />
-              {note.hasImages && <Image size={12} className="text-[#86868B]" />}
-              {note.hasCode && <Code size={12} className="text-[#86868B]" />}
-            </div>
-
-            {/* Tags */}
-            {note.tags.length > 0 && (
-              <div className="flex items-center gap-1">
-                {note.tags.slice(0, 2).map((tag) => (
-                  <span
-                    key={tag}
-                    className="px-2 py-0.5 bg-gray-100 text-[11px] text-gray-600 rounded-full"
-                  >
-                    {tag}
-                  </span>
-                ))}
-                {note.tags.length > 2 && (
-                  <span className="text-[11px] text-gray-500">
-                    +{note.tags.length - 2}
-                  </span>
-                )}
-              </div>
-            )}
-          </div>
-
-          {/* Date */}
-          <span className="text-[11px] text-[#86868B]">
-            {formatDate(note.updatedAt)}
+      )}
+      
+      {/* Tags */}
+      {noteTags.length > 0 && (
+        <div className="flex flex-wrap gap-1.5 mb-3">
+          {noteTags.map((tag) => (
+            <span 
+              key={tag.id}
+              className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs text-white bg-gradient-to-r ${tag.color}`}
+            >
+              <Hash className="w-2.5 h-2.5" />
+              {tag.name}
+            </span>
+          ))}
+        </div>
+      )}
+      
+      {/* Status Bar */}
+      <div className="flex items-center justify-between text-xs text-gray-500">
+        <div className="flex items-center gap-3">
+          <span className="flex items-center gap-1">
+            <Clock className="w-3 h-3" />
+            {note.metadata?.lastEditedRelative || 'just now'}
           </span>
+          <span>{note.metadata?.wordCount || 0} words</span>
         </div>
+        {note.metadata?.hasCheckboxes && (
+          <div className="flex items-center gap-1">
+            <div className="w-16 h-1.5 bg-gray-200 rounded-full overflow-hidden">
+              <div 
+                className="h-full bg-green-500 transition-all duration-300"
+                style={{ width: `${note.metadata.completionPercentage || 0}%` }}
+              />
+            </div>
+            <span className="text-xs text-gray-600">{note.metadata.completionPercentage || 0}%</span>
+          </div>
+        )}
       </div>
     </div>
   )
@@ -126,13 +178,11 @@ const MemoizedNoteCard: React.FC<MemoizedNoteCardProps> = memo(({
   // Custom comparison function for memo
   return (
     prevProps.note.id === nextProps.note.id &&
-    prevProps.note.title === nextProps.note.title &&
-    prevProps.note.content === nextProps.note.content &&
     prevProps.note.updatedAt.getTime() === nextProps.note.updatedAt.getTime() &&
-    prevProps.note.tags.length === nextProps.note.tags.length &&
     prevProps.isActive === nextProps.isActive &&
     prevProps.isSelected === nextProps.isSelected &&
-    prevProps.isFavorite === nextProps.isFavorite
+    prevProps.isFavorite === nextProps.isFavorite &&
+    JSON.stringify(prevProps.note.tags) === JSON.stringify(nextProps.note.tags)
   )
 })
 

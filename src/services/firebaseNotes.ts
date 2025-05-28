@@ -13,10 +13,15 @@ import { db, auth } from './firebase';
 import type { Note, Project } from '../store/useStore';
 import type { Folder, Tag } from '../types/editor';
 
+import type { FirebaseTimestamp } from '../types';
+
 // Helper to convert Firestore timestamp to Date
-const timestampToDate = (timestamp: any): Date => {
-  if (timestamp && timestamp.toDate) {
+const timestampToDate = (timestamp: FirebaseTimestamp | Date | undefined): Date => {
+  if (timestamp && 'toDate' in timestamp) {
     return timestamp.toDate();
+  }
+  if (timestamp instanceof Date) {
+    return timestamp;
   }
   return new Date();
 };

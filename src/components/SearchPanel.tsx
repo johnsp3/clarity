@@ -81,10 +81,11 @@ export const SearchPanel: React.FC<SearchPanelProps> = ({ isOpen, onClose, onIns
       }
 
       setMessages(prev => [...prev, responseMessage])
-    } catch (error: any) {
+    } catch (error) {
+      const err = error as Error
       const errorMessage: Message = {
         type: 'assistant',
-        content: `Error: ${error.message || 'Unknown error occurred'}`,
+        content: `Error: ${err.message || 'Unknown error occurred'}`,
         timestamp: Date.now()
       }
       setMessages(prev => [...prev, errorMessage])

@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react'
-import { detectTextFormatAI } from '../utils/chatgpt-editor'
+import { detectTextFormat, isApiAvailable } from '../services/openai-service'
 import { 
   Hash, 
   Code, 
@@ -7,7 +7,8 @@ import {
   Database,
   Globe,
   FileSpreadsheet,
-  Sparkles
+  Sparkles,
+  Loader2
 } from 'lucide-react'
 
 interface FormatBadgeProps {
@@ -17,20 +18,22 @@ interface FormatBadgeProps {
 }
 
 export const FormatBadge: React.FC<FormatBadgeProps> = ({ content, visible = true, format: providedFormat }) => {
-  const [format, setFormat] = useState<string | null>(null)
-  const [confidence, setConfidence] = useState<'high' | 'medium' | 'low'>('medium')
+  const [format, setFormat] = useState<string>('plain')
+  const [confidence, setConfidence] = useState<'high' | 'medium' | 'low'>('high')
   const [isDetecting, setIsDetecting] = useState(false)
+  const [reasoning, setReasoning] = useState<string>('')
   
   // Refs for cleanup and debouncing
-  const timeoutRef = useRef<NodeJS.Timeout | null>(null)
-  const lastContentRef = useRef<string>('')
   const isUnmountedRef = useRef(false)
+  const lastContentRef = useRef('')
+  const detectionTimeoutRef = useRef<NodeJS.Timeout>()
 
+  // Cleanup on unmount
   useEffect(() => {
     return () => {
       isUnmountedRef.current = true
-      if (timeoutRef.current) {
-        clearTimeout(timeoutRef.current)
+      if (detectionTimeoutRef.current) {
+        clearTimeout(detectionTimeoutRef.current)
       }
     }
   }, [])
@@ -39,49 +42,56 @@ export const FormatBadge: React.FC<FormatBadgeProps> = ({ content, visible = tru
     if (providedFormat) {
       setFormat(providedFormat)
       setConfidence('high')
+      setReasoning('Format provided by user')
       return
     }
 
-    // Clear any existing timeout
-    if (timeoutRef.current) {
-      clearTimeout(timeoutRef.current)
+    // Skip detection for very short content
+    if (!content || content.trim().length < 5) {
+      setFormat('plain')
+      setConfidence('high')
+      setReasoning('Content too short')
+      return
     }
 
-    const detectFormat = async () => {
-      // Check if component is unmounted
-      if (isUnmountedRef.current) return
-      
-      if (!content || content.length < 10) {
-        setFormat('plain')
-        setIsDetecting(false)
-        return
-      }
+    // Skip if content hasn't changed significantly
+    if (lastContentRef.current === content) {
+      return
+    }
 
-      // Skip if content hasn't changed significantly
-      if (lastContentRef.current === content) {
-        return
-      }
-      
-      lastContentRef.current = content
+    lastContentRef.current = content
+
+    // Clear any existing timeout
+    if (detectionTimeoutRef.current) {
+      clearTimeout(detectionTimeoutRef.current)
+    }
+
+    // Debounce format detection
+    detectionTimeoutRef.current = setTimeout(async () => {
+      if (isUnmountedRef.current) return
+
       setIsDetecting(true)
-      
+
       try {
-        // Use ChatGPT API for format detection (now with queue management)
-        console.log('🤖 FormatBadge: Requesting format detection (queued)')
-        const result = await detectTextFormatAI(content)
+        console.log('🔍 [FormatBadge] Starting format detection', { contentLength: content.length })
         
-        // Check if component is still mounted and content hasn't changed
+        const result = await detectTextFormat(content)
+        
+        // Only update state if component is still mounted and content hasn't changed
         if (!isUnmountedRef.current && lastContentRef.current === content) {
-          console.log('🎯 FormatBadge: Format detection result:', result)
+          console.log('✅ [FormatBadge] Format detection completed', result)
           setFormat(result.format)
           setConfidence(result.confidence)
+          setReasoning(result.reasoning || 'AI analysis')
         }
       } catch (error) {
-        console.error('❌ FormatBadge: Format detection failed:', error)
+        console.error('❌ [FormatBadge] Format detection failed:', error)
+        
         // Only update state if component is still mounted
         if (!isUnmountedRef.current) {
           setFormat('plain')
           setConfidence('low')
+          setReasoning('Detection failed')
         }
       } finally {
         // Only update state if component is still mounted
@@ -89,87 +99,99 @@ export const FormatBadge: React.FC<FormatBadgeProps> = ({ content, visible = tru
           setIsDetecting(false)
         }
       }
-    }
-
-    // Debounce format detection with longer delay to reduce API calls
-    timeoutRef.current = setTimeout(detectFormat, 1000) // Increased from 500ms to 1000ms
-    
-    return () => {
-      if (timeoutRef.current) {
-        clearTimeout(timeoutRef.current)
-      }
-    }
+    }, 1000) // 1 second debounce
   }, [content, providedFormat])
 
-  if (!visible || !format || isDetecting) return null
+  if (!visible) return null
 
-  const formatConfig: Record<string, { icon: React.ComponentType<any>; label: string; color: string }> = {
-    markdown: {
-      icon: Hash,
-      label: 'Markdown',
-      color: 'bg-blue-100 text-blue-700 border-blue-200'
+  // Don't show badge while detecting unless we have a previous format
+  if (isDetecting && format === 'plain' && !providedFormat) {
+    return (
+      <div className="inline-flex items-center gap-1.5 px-2 py-1 bg-blue-50 text-blue-700 rounded-md text-xs font-medium border border-blue-200">
+        <Loader2 className="w-3 h-3 animate-spin" />
+        <span>Detecting...</span>
+      </div>
+    )
+  }
+
+  const formatConfig = {
+    markdown: { 
+      icon: Hash, 
+      label: 'Markdown', 
+      color: 'bg-blue-50 text-blue-700 border-blue-200',
+      description: 'Markdown formatting detected'
     },
-    html: {
-      icon: Code,
-      label: 'HTML',
-      color: 'bg-orange-100 text-orange-700 border-orange-200'
+    html: { 
+      icon: Code, 
+      label: 'HTML', 
+      color: 'bg-orange-50 text-orange-700 border-orange-200',
+      description: 'HTML markup detected'
     },
-    code: {
-      icon: Code,
-      label: 'Code',
-      color: 'bg-green-100 text-green-700 border-green-200'
+    code: { 
+      icon: Code, 
+      label: 'Code', 
+      color: 'bg-green-50 text-green-700 border-green-200',
+      description: 'Programming code detected'
     },
-    json: {
-      icon: Database,
-      label: 'JSON',
-      color: 'bg-blue-100 text-blue-700 border-blue-200'
+    json: { 
+      icon: Database, 
+      label: 'JSON', 
+      color: 'bg-purple-50 text-purple-700 border-purple-200',
+      description: 'JSON data structure detected'
     },
-    xml: {
-      icon: Globe,
-      label: 'XML',
-      color: 'bg-yellow-100 text-yellow-700 border-yellow-200'
+    xml: { 
+      icon: Globe, 
+      label: 'XML', 
+      color: 'bg-yellow-50 text-yellow-700 border-yellow-200',
+      description: 'XML markup detected'
     },
-    csv: {
-      icon: FileSpreadsheet,
-      label: 'CSV',
-      color: 'bg-emerald-100 text-emerald-700 border-emerald-200'
+    csv: { 
+      icon: FileSpreadsheet, 
+      label: 'CSV', 
+      color: 'bg-emerald-50 text-emerald-700 border-emerald-200',
+      description: 'CSV data detected'
     },
-    rich: {
-      icon: Sparkles,
-      label: 'Rich Text',
-      color: 'bg-pink-100 text-pink-700 border-pink-200'
+    rich: { 
+      icon: Sparkles, 
+      label: 'Rich Text', 
+      color: 'bg-pink-50 text-pink-700 border-pink-200',
+      description: 'Rich text formatting detected'
     },
-    word: {
-      icon: FileText,
-      label: 'Word Document',
-      color: 'bg-indigo-100 text-indigo-700 border-indigo-200'
-    },
-    docx: {
-      icon: FileText,
-      label: 'Word DOCX',
-      color: 'bg-indigo-100 text-indigo-700 border-indigo-200'
-    },
-    rtf: {
-      icon: FileText,
-      label: 'Rich Text Format',
-      color: 'bg-cyan-100 text-cyan-700 border-cyan-200'
-    },
-    plain: {
-      icon: FileText,
-      label: 'Plain Text',
-      color: 'bg-gray-100 text-gray-700 border-gray-200'
+    plain: { 
+      icon: FileText, 
+      label: 'Plain Text', 
+      color: 'bg-gray-50 text-gray-700 border-gray-200',
+      description: 'Plain text content'
     }
   }
 
-  const config = formatConfig[format] || formatConfig.plain
+  const config = formatConfig[format as keyof typeof formatConfig] || formatConfig.plain
   const Icon = config.icon
 
+  // Show confidence indicator for AI-detected formats
+  const showConfidence = !providedFormat && isApiAvailable() && format !== 'plain'
+  const confidenceColor = {
+    high: 'text-green-600',
+    medium: 'text-yellow-600', 
+    low: 'text-red-600'
+  }[confidence]
+
   return (
-    <div className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border transition-all duration-200 ${config.color}`}>
-      <Icon className="w-3.5 h-3.5" />
+    <div 
+      className={`inline-flex items-center gap-1.5 px-2 py-1 rounded-md text-xs font-medium border ${config.color} transition-all duration-200`}
+      title={`${config.description}${reasoning ? ` - ${reasoning}` : ''}`}
+    >
+      <Icon className="w-3 h-3" />
       <span>{config.label}</span>
-      {confidence === 'high' && (
-        <div className="w-1.5 h-1.5 bg-current rounded-full opacity-60" title="High confidence detection" />
+      
+      {showConfidence && (
+        <span className={`text-xs ${confidenceColor}`}>
+          •{confidence.charAt(0).toUpperCase()}
+        </span>
+      )}
+      
+      {isDetecting && (
+        <Loader2 className="w-3 h-3 animate-spin opacity-50" />
       )}
     </div>
   )

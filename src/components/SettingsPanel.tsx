@@ -7,6 +7,7 @@ import {
 import * as Dialog from '@radix-ui/react-dialog'
 import { encryptData, decryptData } from '../services/encryption'
 import { signOutUser, auth } from '../services/firebase'
+import { validateApiKey } from '../services/openai-service'
 
 interface SettingsPanelProps {
   isOpen?: boolean
@@ -97,9 +98,11 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
     try {
       setIsUpdatingChatGPTApiKey(true)
       
-      // Basic validation
-      if (!newChatGPTApiKey.startsWith('sk-')) {
-        throw new Error('ChatGPT API key must start with "sk-"')
+      // Validate API key with GPT-4o
+      const validation = await validateApiKey(newChatGPTApiKey.trim())
+      
+      if (!validation.success) {
+        throw new Error(validation.details)
       }
       
       // Encrypt and save

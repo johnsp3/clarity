@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd'
+import { DragDropContext, Droppable, Draggable, DropResult } from 'react-beautiful-dnd'
 import { 
   Plus, FolderOpen, Folder, FileText, ChevronRight,
   Star, Code, Image, Clock, Edit3, Trash2, MoreVertical, Sparkles
@@ -9,6 +9,11 @@ import * as ContextMenu from '@radix-ui/react-context-menu'
 import { useStore } from '../store/useStore'
 import { ProjectModal } from './ProjectModal'
 import { UserProfile } from './UserProfile'
+import { 
+  announceToScreenReader,
+  createAriaLabel,
+  formatNumberForScreenReader
+} from '../utils/accessibility'
 
 import { Folder as FolderType } from '../types/editor'
 
@@ -40,7 +45,6 @@ export const EnhancedSidebar: React.FC<EnhancedSidebarProps> = ({
     getProjectNoteCount,
     getFoldersByProject,
     getNotesByFolder,
-
     setQuickAccessView,
     recentNotes,
     favoriteNotes,
@@ -55,14 +59,16 @@ export const EnhancedSidebar: React.FC<EnhancedSidebarProps> = ({
   const [editingFolderId, setEditingFolderId] = useState<string | null>(null)
   const [editingFolderName, setEditingFolderName] = useState('')
 
-  const handleDragEnd = async (result: any) => {
+  const handleDragEnd = async (result: DropResult) => {
     if (!result.destination) return
 
     if (result.type === 'project') {
       try {
         await reorderProjects(result.source.index, result.destination.index)
+        announceToScreenReader('Project reordered successfully')
       } catch (error) {
         console.error('Failed to reorder projects:', error)
+        announceToScreenReader('Failed to reorder project')
       }
     }
   }
@@ -93,8 +99,10 @@ export const EnhancedSidebar: React.FC<EnhancedSidebarProps> = ({
     if (confirm(message)) {
       try {
         await deleteFolder(folder.id)
+        announceToScreenReader(`Folder "${folder.name}" deleted`)
       } catch (error) {
         console.error('Failed to delete folder:', error)
+        announceToScreenReader('Failed to delete folder')
       }
     }
   }
@@ -121,6 +129,7 @@ export const EnhancedSidebar: React.FC<EnhancedSidebarProps> = ({
     
     if (confirm(message)) {
       deleteProject(projectId)
+      announceToScreenReader(`Collection "${project.name}" deleted`)
     }
   }
 
@@ -130,10 +139,9 @@ export const EnhancedSidebar: React.FC<EnhancedSidebarProps> = ({
 
     if (confirm(`Delete "${note.title}"? This action cannot be undone.`)) {
       deleteNote(noteId)
+      announceToScreenReader(`Note "${note.title}" deleted`)
     }
   }
-
-
 
   const renderFolder = (folder: FolderType, level: number = 1) => {
     const childFolders = folders.filter(f => f.parentId === folder.id)
@@ -161,6 +169,7 @@ export const EnhancedSidebar: React.FC<EnhancedSidebarProps> = ({
                   onBlur={handleSaveRename}
                   className="input-apple flex-1 text-[15px] py-1"
                   autoFocus
+                  aria-label={`Rename folder ${folder.name}`}
                 />
               </div>
             ) : (
@@ -174,24 +183,33 @@ export const EnhancedSidebar: React.FC<EnhancedSidebarProps> = ({
                     ? 'sidebar-item-active' 
                     : ''
                 }`}
+                aria-expanded={isExpanded}
+                aria-label={createAriaLabel(
+                  isExpanded ? 'Collapse' : 'Expand',
+                  `folder ${folder.name}`,
+                  formatNumberForScreenReader(folderNotes.length, 'note', 'notes')
+                )}
+                role="treeitem"
+                aria-level={level}
               >
                 <ChevronRight 
                   size={12} 
                   className={`flex-shrink-0 text-[var(--text-tertiary)] transition-transform var(--transition-fast) ${
                     isExpanded ? 'rotate-90' : ''
                   }`}
+                  aria-hidden="true"
                 />
                 
                 {isExpanded ? (
-                  <FolderOpen size={16} className="flex-shrink-0 text-[var(--text-secondary)]" />
+                  <FolderOpen size={16} className="flex-shrink-0 text-[var(--text-secondary)]" aria-hidden="true" />
                 ) : (
-                  <Folder size={16} className="flex-shrink-0 text-[var(--text-secondary)]" />
+                  <Folder size={16} className="flex-shrink-0 text-[var(--text-secondary)]" aria-hidden="true" />
                 )}
                 
                 <span className="flex-1 text-left truncate">{folder.name}</span>
                 
                 {folderNotes.length > 0 && (
-                  <span className="text-[13px] text-[var(--text-tertiary)] bg-[var(--bg-hover)] px-2 py-0.5 rounded-full font-medium">
+                  <span className="text-[13px] text-[var(--text-tertiary)] bg-[var(--bg-hover)] px-2 py-0.5 rounded-full font-medium" aria-label={formatNumberForScreenReader(folderNotes.length, 'note', 'notes')}>
                     {folderNotes.length}
                   </span>
                 )}
@@ -201,7 +219,8 @@ export const EnhancedSidebar: React.FC<EnhancedSidebarProps> = ({
                     <button
                       onClick={(e) => e.stopPropagation()}
                       className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 p-1 
-                               hover:bg-gray-100 rounded"
+                               hover:bg-gray-100 rounded focus:opacity-100"
+                      aria-label={`More options for folder ${folder.name}`}
                     >
                       <MoreVertical size={14} className="text-gray-500" />
                     </button>
@@ -215,14 +234,14 @@ export const EnhancedSidebar: React.FC<EnhancedSidebarProps> = ({
                         onClick={() => handleRenameFolder(folder)}
                         className="dropdown-item-apple"
                       >
-                        <Edit3 size={14} className="text-gray-500" />
+                        <Edit3 size={14} className="text-gray-500" aria-hidden="true" />
                         Rename
                       </DropdownMenu.Item>
                       <DropdownMenu.Item 
                         onClick={() => handleCreateSubfolder(folder)}
                         className="dropdown-item-apple"
                       >
-                        <Plus size={14} className="text-gray-500" />
+                        <Plus size={14} className="text-gray-500" aria-hidden="true" />
                         New Subfolder
                       </DropdownMenu.Item>
                       <DropdownMenu.Separator className="divider-apple my-1" />
@@ -230,7 +249,7 @@ export const EnhancedSidebar: React.FC<EnhancedSidebarProps> = ({
                         onClick={() => handleDeleteFolder(folder)}
                         className="dropdown-item-apple text-red-600"
                       >
-                        <Trash2 size={14} />
+                        <Trash2 size={14} aria-hidden="true" />
                         Delete
                       </DropdownMenu.Item>
                     </DropdownMenu.Content>
@@ -241,7 +260,7 @@ export const EnhancedSidebar: React.FC<EnhancedSidebarProps> = ({
 
             {/* Render notes in this folder */}
             {isExpanded && (
-              <div className="mt-1">
+              <div className="mt-1" role="group" aria-label={`Contents of ${folder.name}`}>
                 {folderNotes.map((note) => (
                   <ContextMenu.Root key={note.id}>
                     <ContextMenu.Trigger asChild>
@@ -253,11 +272,14 @@ export const EnhancedSidebar: React.FC<EnhancedSidebarProps> = ({
                             ? 'sidebar-item-active' 
                             : ''
                         }`}
+                        aria-label={createAriaLabel('Open note', note.title, note.hasImages ? 'contains images' : undefined)}
+                        role="treeitem"
+                        aria-level={level + 1}
                       >
-                        <FileText size={16} className="flex-shrink-0 text-[var(--text-secondary)]" />
+                        <FileText size={16} className="flex-shrink-0 text-[var(--text-secondary)]" aria-hidden="true" />
                         <span className="flex-1 text-left truncate">{note.title}</span>
-                        {note.hasImages && <Image size={12} className="text-[var(--text-tertiary)]" />}
-                        {note.hasCode && <Code size={12} className="text-[var(--text-tertiary)]" />}
+                        {note.hasImages && <Image size={12} className="text-[var(--text-tertiary)]" aria-label="Contains images" />}
+                        {note.hasCode && <Code size={12} className="text-[var(--text-tertiary)]" aria-label="Contains code" />}
                       </button>
                     </ContextMenu.Trigger>
                     
@@ -269,9 +291,9 @@ export const EnhancedSidebar: React.FC<EnhancedSidebarProps> = ({
                           onClick={() => handleDeleteNote(note.id)}
                           className="dropdown-item-apple text-red-600"
                         >
-                          <Trash2 size={14} />
+                          <Trash2 size={14} aria-hidden="true" />
                           Delete
-                          <span className="ml-auto text-[13px]">⌘⌫</span>
+                          <span className="ml-auto text-[13px]" aria-label="Command Delete">⌘⌫</span>
                         </ContextMenu.Item>
                       </ContextMenu.Content>
                     </ContextMenu.Portal>
@@ -293,15 +315,15 @@ export const EnhancedSidebar: React.FC<EnhancedSidebarProps> = ({
               onClick={() => handleRenameFolder(folder)}
               className="dropdown-item-apple"
             >
-              <Edit3 size={14} className="text-gray-500" />
+              <Edit3 size={14} className="text-gray-500" aria-hidden="true" />
               Rename
-              <span className="ml-auto text-[13px] text-gray-500">⌘R</span>
+              <span className="ml-auto text-[13px] text-gray-500" aria-label="Command R">⌘R</span>
             </ContextMenu.Item>
             <ContextMenu.Item 
               onClick={() => handleCreateSubfolder(folder)}
               className="dropdown-item-apple"
             >
-              <Plus size={14} className="text-gray-500" />
+              <Plus size={14} className="text-gray-500" aria-hidden="true" />
               New Subfolder
             </ContextMenu.Item>
             <ContextMenu.Separator className="divider-apple my-1" />
@@ -309,9 +331,9 @@ export const EnhancedSidebar: React.FC<EnhancedSidebarProps> = ({
               onClick={() => handleDeleteFolder(folder)}
               className="dropdown-item-apple text-red-600"
             >
-              <Trash2 size={14} />
+              <Trash2 size={14} aria-hidden="true" />
               Delete
-              <span className="ml-auto text-[13px]">⌘⌫</span>
+              <span className="ml-auto text-[13px]" aria-label="Command Delete">⌘⌫</span>
             </ContextMenu.Item>
           </ContextMenu.Content>
         </ContextMenu.Portal>
@@ -321,14 +343,18 @@ export const EnhancedSidebar: React.FC<EnhancedSidebarProps> = ({
 
   return (
     <>
-      <aside className="w-[260px] h-screen bg-[var(--bg-primary)] border-r border-[var(--border-light)] flex flex-col shadow-[var(--shadow-xs)] overflow-hidden">
+      <aside 
+        className="w-[260px] h-screen bg-[var(--bg-primary)] border-r border-[var(--border-light)] flex flex-col shadow-[var(--shadow-xs)] overflow-hidden"
+        role="navigation"
+        aria-label="Main navigation"
+      >
         {/* Library Section */}
         <div className="p-6 flex-shrink-0">
-          <h2 className="text-apple-footnote mb-6">
+          <h2 className="text-apple-footnote mb-6" id="library-heading">
             LIBRARY
           </h2>
           
-          <div className="space-y-1">
+          <div className="space-y-1" role="tree" aria-labelledby="library-heading">
             <button
               onClick={() => {
                 setActiveProject(null)
@@ -340,10 +366,12 @@ export const EnhancedSidebar: React.FC<EnhancedSidebarProps> = ({
                   ? 'sidebar-item-active'
                   : ''
               }`}
+              role="treeitem"
+              aria-label={createAriaLabel('View all notes', '', formatNumberForScreenReader(notes.length, 'note', 'notes'))}
             >
-              <FileText size={16} className="text-[var(--text-secondary)]" />
+              <FileText size={16} className="text-[var(--text-secondary)]" aria-hidden="true" />
               <span className="flex-1 text-left">All Notes</span>
-              <span className="text-[13px] text-[var(--text-tertiary)] bg-[var(--bg-hover)] px-2 py-0.5 rounded-full font-medium">
+              <span className="text-[13px] text-[var(--text-tertiary)] bg-[var(--bg-hover)] px-2 py-0.5 rounded-full font-medium" aria-hidden="true">
                 {notes.length}
               </span>
             </button>
@@ -359,10 +387,12 @@ export const EnhancedSidebar: React.FC<EnhancedSidebarProps> = ({
                   ? 'sidebar-item-active'
                   : ''
               }`}
+              role="treeitem"
+              aria-label={createAriaLabel('View recent notes', '', formatNumberForScreenReader(recentNotes().length, 'note', 'notes'))}
             >
-              <Clock size={16} className="text-[var(--text-secondary)]" />
+              <Clock size={16} className="text-[var(--text-secondary)]" aria-hidden="true" />
               <span className="flex-1 text-left">Recent</span>
-              <span className="text-[13px] text-[var(--text-tertiary)] bg-[var(--bg-hover)] px-2 py-0.5 rounded-full font-medium">
+              <span className="text-[13px] text-[var(--text-tertiary)] bg-[var(--bg-hover)] px-2 py-0.5 rounded-full font-medium" aria-hidden="true">
                 {recentNotes().length}
               </span>
             </button>
@@ -378,10 +408,12 @@ export const EnhancedSidebar: React.FC<EnhancedSidebarProps> = ({
                   ? 'sidebar-item-active'
                   : ''
               }`}
+              role="treeitem"
+              aria-label={createAriaLabel('View favorite notes', '', formatNumberForScreenReader(favoriteNotes().length, 'note', 'notes'))}
             >
-              <Star size={16} className="text-[var(--text-secondary)]" />
+              <Star size={16} className="text-[var(--text-secondary)]" aria-hidden="true" />
               <span className="flex-1 text-left">Favorites</span>
-              <span className="text-[13px] text-[var(--text-tertiary)] bg-[var(--bg-hover)] px-2 py-0.5 rounded-full font-medium">
+              <span className="text-[13px] text-[var(--text-tertiary)] bg-[var(--bg-hover)] px-2 py-0.5 rounded-full font-medium" aria-hidden="true">
                 {favoriteNotes().length}
               </span>
             </button>
@@ -390,28 +422,31 @@ export const EnhancedSidebar: React.FC<EnhancedSidebarProps> = ({
             <button
               onClick={onShowSearch}
               className="sidebar-item w-full group"
+              role="treeitem"
+              aria-label="Open AI-powered search (Pro feature)"
             >
-              <Sparkles size={16} className="text-[var(--accent-primary)] group-hover:text-[var(--accent-primary-hover)]" />
+              <Sparkles size={16} className="text-[var(--accent-primary)] group-hover:text-[var(--accent-primary-hover)]" aria-hidden="true" />
               <span className="flex-1 text-left">AI Search</span>
-              <span className="text-[10px] text-[var(--accent-primary)] bg-[var(--accent-primary-light)] px-1.5 py-0.5 rounded-full font-semibold uppercase tracking-wide">
+              <span className="text-[10px] text-[var(--accent-primary)] bg-[var(--accent-primary-light)] px-1.5 py-0.5 rounded-full font-semibold uppercase tracking-wide" aria-label="Pro feature">
                 PRO
               </span>
             </button>
           </div>
         </div>
 
-        <div className="divider-apple flex-shrink-0" />
+        <div className="divider-apple flex-shrink-0" role="separator" />
 
         {/* Collections Section */}
         <div className="flex-1 overflow-y-auto p-6 min-h-0">
           <div className="flex items-center justify-between mb-6">
-            <h2 className="text-apple-footnote">
+            <h2 className="text-apple-footnote" id="collections-heading">
               COLLECTIONS
             </h2>
             <button
               onClick={() => setShowProjectModal(true)}
               className="btn-apple-icon hover-lift"
               title="Create new collection"
+              aria-label="Create new collection"
             >
               <Plus size={16} className="text-[var(--text-secondary)]" />
             </button>
@@ -424,6 +459,8 @@ export const EnhancedSidebar: React.FC<EnhancedSidebarProps> = ({
                   {...provided.droppableProps}
                   ref={provided.innerRef}
                   className="space-y-1"
+                  role="tree"
+                  aria-labelledby="collections-heading"
                 >
                   {projects.map((project, index) => {
                     const projectFolders = getFoldersByProject(project.id)
@@ -456,16 +493,24 @@ export const EnhancedSidebar: React.FC<EnhancedSidebarProps> = ({
                                     ? 'sidebar-item-active'
                                     : ''
                                 }`}
+                                aria-expanded={isExpanded}
+                                aria-label={createAriaLabel(
+                                  isExpanded ? 'Collapse' : 'Expand',
+                                  `collection ${project.name}`,
+                                  formatNumberForScreenReader(noteCount, 'note', 'notes')
+                                )}
+                                role="treeitem"
                               >
                                 <ChevronRight 
                                   size={12} 
                                   className={`flex-shrink-0 text-[var(--text-tertiary)] transition-transform var(--transition-fast) ${
                                     isExpanded ? 'rotate-90' : ''
                                   }`}
+                                  aria-hidden="true"
                                 />
                                 
                                 <span className="flex-1 text-left">{project.name}</span>
-                                <span className="text-[13px] text-[var(--text-tertiary)] bg-[var(--bg-hover)] px-2 py-0.5 rounded-full font-medium">
+                                <span className="text-[13px] text-[var(--text-tertiary)] bg-[var(--bg-hover)] px-2 py-0.5 rounded-full font-medium" aria-hidden="true">
                                   {noteCount}
                                 </span>
                                 
@@ -474,7 +519,8 @@ export const EnhancedSidebar: React.FC<EnhancedSidebarProps> = ({
                                     <button
                                       onClick={(e) => e.stopPropagation()}
                                       className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 p-1 
-                                               hover:bg-gray-100 rounded"
+                                               hover:bg-gray-100 rounded focus:opacity-100"
+                                      aria-label={`More options for collection ${project.name}`}
                                     >
                                       <MoreVertical size={14} className="text-gray-500" />
                                     </button>
@@ -487,7 +533,7 @@ export const EnhancedSidebar: React.FC<EnhancedSidebarProps> = ({
                                       <DropdownMenu.Item 
                                         className="dropdown-item-apple"
                                       >
-                                        <Edit3 size={14} className="text-gray-500" />
+                                        <Edit3 size={14} className="text-gray-500" aria-hidden="true" />
                                         Rename
                                       </DropdownMenu.Item>
                                       <DropdownMenu.Separator className="divider-apple my-1" />
@@ -495,7 +541,7 @@ export const EnhancedSidebar: React.FC<EnhancedSidebarProps> = ({
                                         onClick={() => handleDeleteProject(project.id)}
                                         className="dropdown-item-apple text-red-600"
                                       >
-                                        <Trash2 size={14} />
+                                        <Trash2 size={14} aria-hidden="true" />
                                         Delete
                                       </DropdownMenu.Item>
                                     </DropdownMenu.Content>
@@ -505,7 +551,7 @@ export const EnhancedSidebar: React.FC<EnhancedSidebarProps> = ({
 
                               {/* Render project folders */}
                               {isExpanded && (
-                                <div className="mt-1">
+                                <div className="mt-1" role="group" aria-label={`Folders in ${project.name}`}>
                                   {projectFolders
                                     .filter(folder => !folder.parentId)
                                     .map((folder) => renderFolder(folder, 1))}
@@ -527,7 +573,7 @@ export const EnhancedSidebar: React.FC<EnhancedSidebarProps> = ({
         </div>
 
         {/* User Profile at bottom */}
-        <div className="p-6 border-t border-[var(--border-light)] bg-[var(--bg-tertiary)] flex-shrink-0">
+        <div className="p-6 border-t border-[var(--border-light)] bg-[var(--bg-tertiary)] flex-shrink-0" role="contentinfo">
           <UserProfile 
             userEmail={userEmail} 
             onSignOut={onSignOut}

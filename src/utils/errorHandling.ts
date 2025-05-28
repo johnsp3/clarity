@@ -3,30 +3,33 @@
 export interface AppError {
   message: string
   code?: string
-  details?: any
+  details?: unknown
 }
 
-export const createError = (message: string, code?: string, details?: any): AppError => ({
+export const createError = (message: string, code?: string, details?: unknown): AppError => ({
   message,
   code,
   details
 })
 
-export const isNetworkError = (error: any): boolean => {
-  return error?.code === 'auth/network-request-failed' || 
-         error?.message?.includes('network') ||
-         error?.message?.includes('offline')
+export const isNetworkError = (error: unknown): boolean => {
+  const err = error as { code?: string; message?: string }
+  return err?.code === 'auth/network-request-failed' || 
+         err?.message?.includes('network') === true ||
+         err?.message?.includes('offline') === true
 }
 
-export const isAuthError = (error: any): boolean => {
-  return error?.code?.startsWith('auth/') || 
-         error?.message?.includes('authentication')
+export const isAuthError = (error: unknown): boolean => {
+  const err = error as { code?: string; message?: string }
+  return err?.code?.startsWith('auth/') === true || 
+         err?.message?.includes('authentication') === true
 }
 
-export const getErrorMessage = (error: any): string => {
+export const getErrorMessage = (error: unknown): string => {
   if (typeof error === 'string') return error
-  if (error?.message) return error.message
-  if (error?.code) return `Error: ${error.code}`
+  const err = error as { message?: string; code?: string }
+  if (err?.message) return err.message
+  if (err?.code) return `Error: ${err.code}`
   return 'An unexpected error occurred'
 }
 
@@ -42,7 +45,7 @@ export const handleAsyncOperation = async <T>(
     return { 
       error: createError(
         getErrorMessage(error),
-        (error as any)?.code,
+        (error as { code?: string })?.code,
         error
       )
     }
@@ -55,7 +58,7 @@ export const withRetry = async <T>(
   maxRetries: number = 3,
   delay: number = 1000
 ): Promise<T> => {
-  let lastError: any
+  let lastError: unknown
   
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
     try {

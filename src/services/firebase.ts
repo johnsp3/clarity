@@ -128,15 +128,16 @@ export const signInWithGoogle = async (): Promise<User> => {
     }
     
     return result.user
-  } catch (error: any) {
+  } catch (error) {
     console.error('Sign in error:', error)
     
     // Handle specific Firebase auth errors
-    if (error.code === 'auth/popup-closed-by-user') {
+    const authError = error as { code?: string; message?: string }
+    if (authError.code === 'auth/popup-closed-by-user') {
       throw new Error('Sign in was cancelled')
-    } else if (error.code === 'auth/popup-blocked') {
+    } else if (authError.code === 'auth/popup-blocked') {
       throw new Error('Pop-up was blocked by browser. Please allow pop-ups for this site.')
-    } else if (error.code === 'auth/network-request-failed') {
+    } else if (authError.code === 'auth/network-request-failed') {
       throw new Error('Network error. Please check your connection and try again.')
     }
     

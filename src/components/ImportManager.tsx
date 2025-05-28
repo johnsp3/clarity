@@ -3,6 +3,7 @@ import { Upload, FileText, FileCode, X, Check } from 'lucide-react'
 import * as Dialog from '@radix-ui/react-dialog'
 import { useStore } from '../store/useStore'
 import { ContentFormat } from '../types/editor'
+import { parseNotePreview, calculateNoteMetadata } from '../utils/notePreviewParser'
 
 interface ImportResult {
   success: boolean
@@ -268,6 +269,7 @@ export const ImportManager: React.FC<ImportManagerProps> = ({
     // Import successful notes
     const successfulImports = newResults.filter(r => r.success)
     successfulImports.forEach(result => {
+      const createdAt = new Date()
       addNote({
         title: result.title,
         content: result.content,
@@ -278,6 +280,8 @@ export const ImportManager: React.FC<ImportManagerProps> = ({
         hasImages: result.content.includes('<img'),
         hasCode: result.content.includes('<code') || result.content.includes('<pre'),
         format: result.format,
+        preview: parseNotePreview(result.content),
+        metadata: calculateNoteMetadata(result.content, createdAt)
       })
     })
 

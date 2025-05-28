@@ -1,10 +1,22 @@
 import { create } from 'zustand'
 import { Tag, Folder, ViewMode, SearchFilter, ContentFormat } from '../types/editor'
+import { parseNotePreview, calculateNoteMetadata } from '../utils/notePreviewParser'
 
 // Error handling utility
 const handleAsyncError = (operation: string, error: unknown) => {
   console.error(`Failed to ${operation}:`, error)
   // In a real app, you might want to send this to an error reporting service
+}
+
+export interface PreviewBlock {
+  type: 'text' | 'checklist' | 'code' | 'list' | 'link';
+  content?: string;
+  completed?: number;
+  total?: number;
+  language?: string;
+  preview?: string;
+  items?: number;
+  url?: string;
 }
 
 export interface Note {
@@ -22,6 +34,18 @@ export interface Note {
   createdAt: Date
   updatedAt: Date
   order: number
+  preview: PreviewBlock[]
+  metadata: {
+    wordCount: number
+    lastEditedRelative: string
+    hasCheckboxes: boolean
+    taskCount: number
+    completedTasks: number
+    completionPercentage: number
+    hasAttachments: boolean
+    hasCode: boolean
+    hasLinks: boolean
+  }
 }
 
 export interface Project {
@@ -133,6 +157,9 @@ import {
   deleteTagFromFirebase
 } from '../services/firebaseNotes';
 
+// Import batching service
+import { batchSave } from '../services/firebaseBatch';
+
 export const useStore = create<StoreState>((set, get) => ({
   notes: [],
   projects: [],
@@ -195,12 +222,30 @@ export const useStore = create<StoreState>((set, get) => ({
   },
   
   addNote: async (noteData) => {
+    const createdAt = new Date()
+    const preview = noteData.content ? parseNotePreview(noteData.content) : []
+    const metadata = noteData.content 
+      ? calculateNoteMetadata(noteData.content, createdAt)
+      : {
+          wordCount: 0,
+          lastEditedRelative: 'just now',
+          hasCheckboxes: false,
+          taskCount: 0,
+          completedTasks: 0,
+          completionPercentage: 0,
+          hasAttachments: false,
+          hasCode: false,
+          hasLinks: false
+        }
+    
     const newNote: Note = {
       ...noteData,
       id: Date.now().toString(),
-      createdAt: new Date(),
-      updatedAt: new Date(),
+      createdAt,
+      updatedAt: createdAt,
       order: 0,
+      preview,
+      metadata
     }
     
     // Update local state immediately
@@ -209,15 +254,21 @@ export const useStore = create<StoreState>((set, get) => ({
       activeNoteId: newNote.id,
     }))
     
-    // Save to Firebase
-    try {
-      await saveNote(newNote)
-    } catch (error) {
-      console.error('Failed to save note to Firebase:', error)
-    }
+    // Save to Firebase using batch
+    batchSave('notes', newNote.id, newNote)
   },
   
   updateNote: async (id, updates) => {
+    // Generate preview data if content is updated
+    if (updates.content) {
+      const currentNote = get().notes.find(n => n.id === id)
+      if (currentNote) {
+        const updatedAt = new Date()
+        updates.preview = parseNotePreview(updates.content)
+        updates.metadata = calculateNoteMetadata(updates.content, updatedAt)
+      }
+    }
+    
     // Update local state immediately
     set((state) => ({
       notes: state.notes.map((note) =>
@@ -227,14 +278,10 @@ export const useStore = create<StoreState>((set, get) => ({
       ),
     }))
     
-    // Save to Firebase
+    // Save to Firebase using batch
     const updatedNote = get().notes.find(n => n.id === id)
     if (updatedNote) {
-      try {
-        await saveNote(updatedNote)
-      } catch (error) {
-        console.error('Failed to update note in Firebase:', error)
-      }
+      batchSave('notes', updatedNote.id, updatedNote)
     }
   },
   
@@ -520,10 +567,18 @@ export const useStore = create<StoreState>((set, get) => ({
   
   mergeTag: (fromId, toId) => {
     set((state) => ({
-      tags: state.tags.map((tag) =>
-        tag.id === fromId ? { ...tag, id: toId } : tag
-      ),
+      // Remove the fromTag and update notes to use toTag
+      tags: state.tags.filter((tag) => tag.id !== fromId),
+      notes: state.notes.map((note) => ({
+        ...note,
+        tags: note.tags.map((tagId) => tagId === fromId ? toId : tagId)
+      }))
     }))
+    
+    // Delete the merged tag from Firebase
+    deleteTagFromFirebase(fromId).catch(error => {
+      console.error('Failed to delete merged tag from Firebase:', error)
+    })
   },
   
   setSearchQuery: (query) => {
@@ -702,4 +757,17 @@ export const useStore = create<StoreState>((set, get) => ({
     }
     return results
   },
-})) 
+}))
+
+// Migration function to generate preview data for existing notes
+export async function migrateExistingNotes() {
+  const { notes, updateNote } = useStore.getState()
+  
+  for (const note of notes) {
+    if (!note.preview || !note.metadata) {
+      await updateNote(note.id, {
+        content: note.content // This will trigger preview generation
+      })
+    }
+  }
+} 

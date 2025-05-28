@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from 'react'
 
-interface UseVirtualizationProps {
-  items: any[]
+interface UseVirtualizationProps<T = unknown> {
+  items: T[]
   itemHeight: number
   containerHeight: number
   overscan?: number
@@ -13,12 +13,12 @@ interface VirtualItem {
   end: number
 }
 
-export const useVirtualization = ({
+export const useVirtualization = <T = unknown>({
   items,
   itemHeight,
   containerHeight,
   overscan = 5
-}: UseVirtualizationProps) => {
+}: UseVirtualizationProps<T>) => {
   const [scrollTop, setScrollTop] = useState(0)
 
   const visibleRange = useMemo(() => {

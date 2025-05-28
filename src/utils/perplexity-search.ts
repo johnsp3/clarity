@@ -86,10 +86,11 @@ export const searchWeb = async (query: string): Promise<SearchResult> => {
       content: response.choices[0].message.content,
       sources: response.sources || []
     }
-  } catch (error: any) {
+  } catch (error) {
+    const err = error as Error
     return {
       success: false,
-      error: error.message
+      error: err.message
     }
   }
 }

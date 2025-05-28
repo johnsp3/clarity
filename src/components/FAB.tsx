@@ -2,6 +2,7 @@ import React, { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Plus, FileText, Folder, Upload } from 'lucide-react'
 import { useStore } from '../store/useStore'
+import { parseNotePreview, calculateNoteMetadata } from '../utils/notePreviewParser'
 
 export const FAB: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false)
@@ -9,9 +10,11 @@ export const FAB: React.FC = () => {
   const { addNote, activeProjectId, addFolder, activeFolderId } = useStore()
 
   const handleNewNote = () => {
+    const content = ''
+    const createdAt = new Date()
     addNote({
       title: '',
-      content: '',
+      content,
       projectId: activeProjectId,
       folderId: activeFolderId,
       tags: [],
@@ -19,6 +22,8 @@ export const FAB: React.FC = () => {
       hasImages: false,
       hasCode: false,
       format: 'markdown',
+      preview: parseNotePreview(content),
+      metadata: calculateNoteMetadata(content, createdAt)
     })
     setIsOpen(false)
     setShowPulse(false)

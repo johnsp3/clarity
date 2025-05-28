@@ -18,7 +18,7 @@ import { calculateReadingTime } from '../../utils/format-detector'
 import { ContentFormat } from '../../types/editor'
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu'
 import { PrintPreview } from './PrintPreview'
-import { useNoteEditor } from '../../hooks/useNoteEditor'
+import { useOptimizedEditor } from '../../hooks/useOptimizedEditor'
 import { TiptapEditor } from './TiptapEditor'
 import { EditorToolbar } from './EditorToolbar'
 import { AIEdit } from '../AIEdit'
@@ -44,10 +44,11 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({ note, onUpdate, 
 
   const previewContentRef = useRef<string>('')
 
-  // Initialize Tiptap editor
-  const editor = useNoteEditor(
-    content, 
-    (newContent) => {
+  // Initialize optimized Tiptap editor
+  const editor = useOptimizedEditor({
+    content,
+    noteId: note.id,
+    onChange: (newContent: string) => {
       setContent(newContent)
       onUpdate({ content: newContent })
       
@@ -58,7 +59,7 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({ note, onUpdate, 
         setLastSaved(new Date())
       }, 500)
     }
-  )
+  })
 
   // Update state when note changes
   useEffect(() => {
@@ -74,7 +75,7 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({ note, onUpdate, 
   useEffect(() => {
     // Calculate stats using the raw content for accurate word count
     const plainTextForStats = editor ? editor.getText() : content.replace(/<[^>]*>/g, '')
-    const words = plainTextForStats.trim().split(/\s+/).filter(word => word.length > 0).length
+    const words = plainTextForStats.trim().split(/\s+/).filter((word: string) => word.length > 0).length
     const chars = plainTextForStats.length
     setWordCount(words)
     setCharCount(chars)
@@ -679,6 +680,7 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({ note, onUpdate, 
                         break
                         
                       case 'html':
+                      case 'beautifulhtml':
                       case 'rich':
                       case 'rtf':
                       case 'docx':
@@ -714,7 +716,9 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({ note, onUpdate, 
                 
                 // Set format after conversion if provided
                 if (format) {
-                  setFormatAfterConversion(format as ContentFormat)
+                  // For beautifulhtml, set format as html
+                  const displayFormat = format === 'beautifulhtml' ? 'html' : format
+                  setFormatAfterConversion(displayFormat as ContentFormat)
                 }
               }}
             />

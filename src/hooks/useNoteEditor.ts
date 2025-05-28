@@ -19,9 +19,11 @@ export const useNoteEditor = (
     extensions: [
       StarterKit,
       Link.configure({
-        openOnClick: false,
+        openOnClick: true,
         HTMLAttributes: {
           class: 'text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 underline transition-colors duration-150',
+          target: '_blank',
+          rel: 'noopener noreferrer'
         },
       }),
       Placeholder.configure({

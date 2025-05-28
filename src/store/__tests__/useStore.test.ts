@@ -441,6 +441,121 @@ describe('useStore', () => {
       expect(recent).toHaveLength(2)
       expect(recent[0].title).toBe('Recent Note') // Most recent first
     })
+
+    it('should filter notes by tag names', () => {
+      const { result } = renderHook(() => useStore())
+      
+      // Add a tag
+      let testTag: any
+      act(() => {
+        testTag = result.current.addTag('important')
+      })
+      
+      // Add notes with and without the tag
+      act(() => {
+        result.current.addNote({
+          title: 'Tagged Note',
+          content: 'This note has a tag',
+          projectId: null,
+          folderId: null,
+          tags: [testTag.id],
+          type: 'markdown',
+          hasImages: false,
+          hasCode: false,
+          format: 'markdown',
+          preview: [],
+          metadata: {
+            wordCount: 5,
+            lastEditedRelative: 'just now',
+            hasCheckboxes: false,
+            taskCount: 0,
+            completedTasks: 0,
+            completionPercentage: 0,
+            hasAttachments: false,
+            hasCode: false,
+            hasLinks: false
+          }
+        })
+        
+        result.current.addNote({
+          title: 'Untagged Note',
+          content: 'This note has no tags',
+          projectId: null,
+          folderId: null,
+          tags: [],
+          type: 'markdown',
+          hasImages: false,
+          hasCode: false,
+          format: 'markdown',
+          preview: [],
+          metadata: {
+            wordCount: 5,
+            lastEditedRelative: 'just now',
+            hasCheckboxes: false,
+            taskCount: 0,
+            completedTasks: 0,
+            completionPercentage: 0,
+            hasAttachments: false,
+            hasCode: false,
+            hasLinks: false
+          }
+        })
+      })
+
+      // Search by tag name
+      act(() => {
+        result.current.setSearchQuery('important')
+      })
+
+      const filtered = result.current.filteredNotes()
+      expect(filtered).toHaveLength(1)
+      expect(filtered[0].title).toBe('Tagged Note')
+    })
+
+    it('should search notes by tag names in searchResults', () => {
+      const { result } = renderHook(() => useStore())
+      
+      // Add a tag
+      let testTag: any
+      act(() => {
+        testTag = result.current.addTag('urgent')
+      })
+      
+      // Add a note with the tag
+      act(() => {
+        result.current.addNote({
+          title: 'Task',
+          content: 'Do something',
+          projectId: null,
+          folderId: null,
+          tags: [testTag.id],
+          type: 'markdown',
+          hasImages: false,
+          hasCode: false,
+          format: 'markdown',
+          preview: [],
+          metadata: {
+            wordCount: 2,
+            lastEditedRelative: 'just now',
+            hasCheckboxes: false,
+            taskCount: 0,
+            completedTasks: 0,
+            completionPercentage: 0,
+            hasAttachments: false,
+            hasCode: false,
+            hasLinks: false
+          }
+        })
+      })
+
+      // Search by tag name
+      const results = result.current.searchResults('urgent')
+      
+      expect(results.notes).toHaveLength(1)
+      expect(results.notes[0].title).toBe('Task')
+      expect(results.tags).toHaveLength(1)
+      expect(results.tags[0].name).toBe('urgent')
+    })
   })
 
   describe('Tag Operations', () => {

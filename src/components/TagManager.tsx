@@ -23,6 +23,36 @@ export const TagManager: React.FC = () => {
     'from-indigo-400 to-indigo-600',
     'from-teal-400 to-teal-600',
     'from-gray-400 to-gray-600',
+    'from-purple-400 to-purple-600',
+    'from-rose-400 to-rose-600',
+    'from-cyan-400 to-cyan-600',
+    'from-lime-400 to-lime-600',
+    'from-amber-400 to-amber-600',
+    'from-violet-400 to-violet-600',
+    'from-fuchsia-400 to-fuchsia-600',
+    'from-sky-400 to-sky-600',
+    'from-green-400 to-green-600',
+    'from-slate-400 to-slate-600',
+    'from-zinc-400 to-zinc-600',
+    'from-stone-400 to-stone-600',
+    'from-neutral-400 to-neutral-600',
+    'from-red-500 to-red-700',
+    'from-orange-500 to-orange-700',
+    'from-amber-500 to-amber-700',
+    'from-yellow-500 to-yellow-700',
+    'from-lime-500 to-lime-700',
+    'from-green-500 to-green-700',
+    'from-emerald-500 to-emerald-700',
+    'from-teal-500 to-teal-700',
+    'from-cyan-500 to-cyan-700',
+    'from-sky-500 to-sky-700',
+    'from-blue-600 to-blue-800',
+    'from-indigo-500 to-indigo-700',
+    'from-violet-500 to-violet-700',
+    'from-purple-500 to-purple-700',
+    'from-fuchsia-500 to-fuchsia-700',
+    'from-pink-500 to-pink-700',
+    'from-rose-500 to-rose-700',
   ]
 
   const getTagUsageCount = (tagId: string) => {
@@ -204,7 +234,7 @@ export const TagManager: React.FC = () => {
                             </DropdownMenu.Trigger>
                             <DropdownMenu.Portal>
                               <DropdownMenu.Content
-                                className="bg-white rounded-xl shadow-xl p-2 grid grid-cols-5 gap-1"
+                                className="bg-white rounded-xl shadow-xl p-2 grid grid-cols-5 gap-1 max-h-[300px] overflow-y-auto"
                                 sideOffset={5}
                               >
                                 {tagColors.map((color) => (

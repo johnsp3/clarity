@@ -126,18 +126,87 @@ interface StoreState {
   searchResults: (query: string) => { notes: Note[]; projects: Project[]; tags: Tag[] }
 }
 
-// Helper function to generate a color based on tag name
-const generateTagColor = (name: string): string => {
-  const colors = [
-    'from-blue-400 to-blue-600',
-    'from-blue-500 to-blue-700',
-    'from-pink-400 to-pink-600',
-    'from-emerald-400 to-emerald-600',
-    'from-orange-400 to-orange-600',
-    'from-red-400 to-red-600',
-  ]
-  const hash = name.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0)
-  return colors[hash % colors.length]
+// Comprehensive color palette for tags
+export const tagColorPalette = [
+  'from-blue-400 to-blue-600',
+  'from-blue-500 to-blue-700',
+  'from-pink-400 to-pink-600',
+  'from-emerald-400 to-emerald-600',
+  'from-orange-400 to-orange-600',
+  'from-red-400 to-red-600',
+  'from-yellow-400 to-yellow-600',
+  'from-indigo-400 to-indigo-600',
+  'from-teal-400 to-teal-600',
+  'from-gray-400 to-gray-600',
+  'from-purple-400 to-purple-600',
+  'from-rose-400 to-rose-600',
+  'from-cyan-400 to-cyan-600',
+  'from-lime-400 to-lime-600',
+  'from-amber-400 to-amber-600',
+  'from-violet-400 to-violet-600',
+  'from-fuchsia-400 to-fuchsia-600',
+  'from-sky-400 to-sky-600',
+  'from-green-400 to-green-600',
+  'from-slate-400 to-slate-600',
+  'from-zinc-400 to-zinc-600',
+  'from-stone-400 to-stone-600',
+  'from-neutral-400 to-neutral-600',
+  'from-red-500 to-red-700',
+  'from-orange-500 to-orange-700',
+  'from-amber-500 to-amber-700',
+  'from-yellow-500 to-yellow-700',
+  'from-lime-500 to-lime-700',
+  'from-green-500 to-green-700',
+  'from-emerald-500 to-emerald-700',
+  'from-teal-500 to-teal-700',
+  'from-cyan-500 to-cyan-700',
+  'from-sky-500 to-sky-700',
+  'from-blue-600 to-blue-800',
+  'from-indigo-500 to-indigo-700',
+  'from-violet-500 to-violet-700',
+  'from-purple-500 to-purple-700',
+  'from-fuchsia-500 to-fuchsia-700',
+  'from-pink-500 to-pink-700',
+  'from-rose-500 to-rose-700',
+]
+
+// Helper function to get the next available color
+export const getNextAvailableColor = (existingTags: Tag[]): string => {
+  // Get all colors currently in use
+  const usedColors = new Set(existingTags.map(tag => tag.color))
+  
+  // Find the first color that's not in use
+  for (const color of tagColorPalette) {
+    if (!usedColors.has(color)) {
+      return color
+    }
+  }
+  
+  // If all colors are used (unlikely with 40+ colors), cycle back to the beginning
+  // but try to find the least used color
+  const colorUsageCount = new Map<string, number>()
+  
+  // Initialize all colors with 0 count
+  tagColorPalette.forEach(color => colorUsageCount.set(color, 0))
+  
+  // Count usage of each color
+  existingTags.forEach(tag => {
+    const count = colorUsageCount.get(tag.color) || 0
+    colorUsageCount.set(tag.color, count + 1)
+  })
+  
+  // Find the color with minimum usage
+  let minUsage = Infinity
+  let leastUsedColor = tagColorPalette[0]
+  
+  colorUsageCount.forEach((count, color) => {
+    if (count < minUsage) {
+      minUsage = count
+      leastUsedColor = color
+    }
+  })
+  
+  return leastUsedColor
 }
 
 // Import Firebase operations
@@ -259,13 +328,14 @@ export const useStore = create<StoreState>((set, get) => ({
   },
   
   updateNote: async (id, updates) => {
-    // Generate preview data if content is updated
-    if (updates.content) {
+    // Only update timestamp and metadata when content is actually changed
+    if (updates.content !== undefined) {
       const currentNote = get().notes.find(n => n.id === id)
       if (currentNote) {
         const updatedAt = new Date()
         updates.preview = parseNotePreview(updates.content)
         updates.metadata = calculateNoteMetadata(updates.content, updatedAt)
+        updates.updatedAt = updatedAt // Only update timestamp when content changes
       }
     }
     
@@ -273,7 +343,7 @@ export const useStore = create<StoreState>((set, get) => ({
     set((state) => ({
       notes: state.notes.map((note) =>
         note.id === id
-          ? { ...note, ...updates, updatedAt: new Date() }
+          ? { ...note, ...updates }
           : note
       ),
     }))
@@ -516,7 +586,7 @@ export const useStore = create<StoreState>((set, get) => ({
     const newTag: Tag = {
       id: Date.now().toString(),
       name,
-      color: generateTagColor(name),
+      color: getNextAvailableColor(get().tags),
       createdAt: new Date(),
       usageCount: 0,
     }
@@ -647,12 +717,12 @@ export const useStore = create<StoreState>((set, get) => ({
   },
   
   filteredNotes: () => {
-    const { notes, searchQuery, activeProjectId, quickAccessView, favoriteNoteIds, activeFolderId, searchFilters, viewMode } = get()
-    let filtered = notes
+    const { notes, searchQuery, activeProjectId, quickAccessView, favoriteNoteIds, activeFolderId, searchFilters, viewMode, tags } = get()
+    let filtered = [...notes] // Create a copy to avoid mutating the original array
     
     // Filter by quick access view
     if (quickAccessView === 'recent') {
-      filtered = notes.sort((a, b) => b.updatedAt.getTime() - a.updatedAt.getTime()).slice(0, 10)
+      filtered = [...notes].sort((a, b) => b.updatedAt.getTime() - a.updatedAt.getTime()).slice(0, 10)
     } else if (quickAccessView === 'favorites') {
       filtered = notes.filter(note => favoriteNoteIds.has(note.id))
     }
@@ -679,36 +749,57 @@ export const useStore = create<StoreState>((set, get) => ({
     if (searchQuery) {
       const query = searchQuery.toLowerCase()
       filtered = filtered.filter(
-        (note) =>
-          note.title.toLowerCase().includes(query) ||
-          note.content.toLowerCase().includes(query)
+        (note) => {
+          // Check title and content
+          const titleMatch = note.title.toLowerCase().includes(query)
+          const contentMatch = note.content.toLowerCase().includes(query)
+          
+          // Check if any of the note's tags match the query
+          const tagMatch = note.tags.some(tagId => {
+            const tag = tags.find(t => t.id === tagId)
+            return tag && tag.name.toLowerCase().includes(query)
+          })
+          
+          return titleMatch || contentMatch || tagMatch
+        }
       )
     }
     
     // Apply sorting based on viewMode
-    return filtered.sort((a, b) => {
+    const sorted = [...filtered].sort((a, b) => {
       let comparison = 0
       
       switch (viewMode.sortBy) {
         case 'modified':
-          comparison = b.updatedAt.getTime() - a.updatedAt.getTime()
+          // For dates, we want newest first by default (descending)
+          comparison = a.updatedAt.getTime() - b.updatedAt.getTime()
           break
         case 'created':
-          comparison = b.createdAt.getTime() - a.createdAt.getTime()
+          // For dates, we want newest first by default (descending)
+          comparison = a.createdAt.getTime() - b.createdAt.getTime()
           break
-        case 'title':
-          comparison = a.title.toLowerCase().localeCompare(b.title.toLowerCase())
+        case 'title': {
+          // Handle empty titles and compare full titles
+          const titleA = (a.title || 'Untitled').toLowerCase()
+          const titleB = (b.title || 'Untitled').toLowerCase()
+          comparison = titleA.localeCompare(titleB)
           break
+        }
         case 'manual':
           comparison = a.order - b.order
           break
         default:
-          comparison = b.updatedAt.getTime() - a.updatedAt.getTime()
+          // Default to newest first
+          comparison = a.updatedAt.getTime() - b.updatedAt.getTime()
       }
       
-      // Apply sort order (asc/desc)
-      return viewMode.sortOrder === 'asc' ? -comparison : comparison
+      // Apply sort order
+      // For ascending: return comparison as-is
+      // For descending: return negated comparison
+      return viewMode.sortOrder === 'asc' ? comparison : -comparison;
     })
+    
+    return sorted;
   },
   
   activeNote: () => {
@@ -733,7 +824,7 @@ export const useStore = create<StoreState>((set, get) => ({
 
   recentNotes: () => {
     const { notes } = get()
-    return notes.sort((a, b) => b.updatedAt.getTime() - a.updatedAt.getTime()).slice(0, 10)
+    return [...notes].sort((a, b) => b.updatedAt.getTime() - a.updatedAt.getTime()).slice(0, 10)
   },
   
   favoriteNotes: () => {
@@ -744,13 +835,27 @@ export const useStore = create<StoreState>((set, get) => ({
   searchResults: (query) => {
     const { notes, projects, tags } = get()
     const results = {
-      notes: notes.filter((note) =>
-        note.title.toLowerCase().includes(query.toLowerCase()) ||
-        note.content.toLowerCase().includes(query.toLowerCase())
-      ),
-      projects: projects.filter((project) =>
-        project.name.toLowerCase().includes(query.toLowerCase())
-      ),
+      notes: notes.filter((note) => {
+        const lowerQuery = query.toLowerCase()
+        
+        // Check title and content
+        const titleMatch = note.title.toLowerCase().includes(lowerQuery)
+        const contentMatch = note.content.toLowerCase().includes(lowerQuery)
+        
+        // Check if any of the note's tags match the query
+        const tagMatch = note.tags.some(tagId => {
+          const tag = tags.find(t => t.id === tagId)
+          return tag && tag.name.toLowerCase().includes(lowerQuery)
+        })
+        
+        return titleMatch || contentMatch || tagMatch
+      }),
+      projects: projects.filter((project) => {
+        const lowerQuery = query.toLowerCase()
+        const nameMatch = project.name.toLowerCase().includes(lowerQuery)
+        const descriptionMatch = project.description?.toLowerCase().includes(lowerQuery) || false
+        return nameMatch || descriptionMatch
+      }),
       tags: tags.filter((tag) =>
         tag.name.toLowerCase().includes(query.toLowerCase())
       ),
@@ -770,4 +875,9 @@ export async function migrateExistingNotes() {
       })
     }
   }
+}
+
+// Expose store for debugging in development
+if (process.env.NODE_ENV === 'development') {
+  (window as any).__CLARITY_STORE__ = useStore;
 } 

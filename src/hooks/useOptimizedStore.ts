@@ -8,22 +8,37 @@ export const useOptimizedStore = () => {
   // Memoized filtered notes to prevent recalculation
   const filteredNotes = useMemo(() => {
     return store.filteredNotes();
-  }, [store]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    store.notes,
+    store.searchQuery,
+    store.activeProjectId,
+    store.quickAccessView,
+    store.favoriteNoteIds,
+    store.activeFolderId,
+    store.searchFilters,
+    store.viewMode,
+    store.filteredNotes,
+    store.tags // Added missing dependency
+  ]);
 
   // Memoized recent notes
   const recentNotes = useMemo(() => {
     return store.recentNotes();
-  }, [store]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [store.notes]); // More specific dependency
 
   // Memoized favorite notes
   const favoriteNotes = useMemo(() => {
     return store.favoriteNotes();
-  }, [store]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [store.notes, store.favoriteNoteIds]); // More specific dependencies
 
   // Memoized active note
   const activeNote = useMemo(() => {
     return store.activeNote();
-  }, [store]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [store.notes, store.activeNoteId]); // More specific dependencies
 
   // Memoized project note counts
   const projectNoteCounts = useMemo(() => {
@@ -32,7 +47,8 @@ export const useOptimizedStore = () => {
       counts[project.id] = store.getProjectNoteCount(project.id);
     });
     return counts;
-  }, [store]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [store.projects, store.notes, store.getProjectNoteCount]); // More specific dependencies
 
   // Memoized folders by project
   const foldersByProject = useMemo(() => {
@@ -41,7 +57,8 @@ export const useOptimizedStore = () => {
       folderMap[project.id] = store.getFoldersByProject(project.id);
     });
     return folderMap;
-  }, [store]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [store.projects, store.folders, store.getFoldersByProject]); // More specific dependencies
 
   return {
     // Original store methods and state

@@ -1,5 +1,15 @@
 import type { Note, Project } from '../store/useStore'
 import type { Folder, Tag } from '../types'
+import { 
+  saveNote, 
+  saveProject, 
+  saveFolder, 
+  saveTag,
+  deleteNoteFromFirebase, 
+  deleteProjectFromFirebase, 
+  deleteFolderFromFirebase, 
+  deleteTagFromFirebase 
+} from './firebaseNotes'
 
 interface BatchOperation {
   type: 'save' | 'delete';
@@ -76,9 +86,6 @@ class FirebaseBatchManager {
   private async executeSaveOperations(operations: BatchOperation[]) {
     if (operations.length === 0) return;
     
-    // Import Firebase functions dynamically to avoid circular dependencies
-    const { saveNote, saveProject, saveFolder, saveTag } = await import('./firebaseNotes');
-    
     const promises = operations.map(async (op) => {
       try {
         if (!op.data) {
@@ -109,14 +116,6 @@ class FirebaseBatchManager {
 
   private async executeDeleteOperations(operations: BatchOperation[]) {
     if (operations.length === 0) return;
-    
-    // Import Firebase functions dynamically
-    const { 
-      deleteNoteFromFirebase, 
-      deleteProjectFromFirebase, 
-      deleteFolderFromFirebase, 
-      deleteTagFromFirebase 
-    } = await import('./firebaseNotes');
     
     const promises = operations.map(async (op) => {
       try {

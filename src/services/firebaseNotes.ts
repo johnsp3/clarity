@@ -14,15 +14,35 @@ import type { Note, Project } from '../store/useStore';
 import type { Folder, Tag } from '../types/editor';
 
 import type { FirebaseTimestamp } from '../types';
+import { handleFirebaseError, logSuccess } from './errorHandling'
 
 // Helper to convert Firestore timestamp to Date
 const timestampToDate = (timestamp: FirebaseTimestamp | Date | undefined): Date => {
-  if (timestamp && 'toDate' in timestamp) {
-    return timestamp.toDate();
+  // Check if it's a Firebase timestamp object
+  if (timestamp && typeof timestamp === 'object' && 'seconds' in timestamp && 'nanoseconds' in timestamp) {
+    // Convert Firebase timestamp to Date
+    const date = new Date(timestamp.seconds * 1000 + timestamp.nanoseconds / 1000000);
+    return date;
   }
+  
+  if (timestamp && 'toDate' in timestamp && typeof timestamp.toDate === 'function') {
+    const date = timestamp.toDate();
+    return date;
+  }
+  
   if (timestamp instanceof Date) {
     return timestamp;
   }
+  
+  // If timestamp is a string or number, try to parse it
+  if (timestamp && (typeof timestamp === 'string' || typeof timestamp === 'number')) {
+    const date = new Date(timestamp);
+    if (!isNaN(date.getTime())) {
+      return date;
+    }
+  }
+  
+  // Default to current date if no valid timestamp
   return new Date();
 };
 
@@ -40,17 +60,21 @@ export const saveNote = async (note: Note): Promise<void> => {
     const userId = getUserId();
     const noteRef = doc(db!, 'users', userId, 'notes', note.id);
     
+    // Convert Date objects to Firebase timestamps for proper storage
     const noteData = {
       ...note,
-      createdAt: note.createdAt || serverTimestamp(),
-      updatedAt: serverTimestamp(),
+      createdAt: note.createdAt instanceof Date ? note.createdAt : (note.createdAt || serverTimestamp()),
+      updatedAt: note.updatedAt instanceof Date ? note.updatedAt : (note.updatedAt || serverTimestamp()),
       userId
     };
     
     await setDoc(noteRef, noteData);
-    console.log('Note saved to Firebase:', note.id);
+    logSuccess(`Note saved to Firebase: ${note.id}`, {
+      noteId: note.id,
+      title: note.title?.substring(0, 50)
+    });
   } catch (error) {
-    console.error('Error saving note:', error);
+    handleFirebaseError(error, 'save note');
     throw error;
   }
 };
@@ -66,6 +90,7 @@ export const loadNotes = async (): Promise<Note[]> => {
     
     snapshot.forEach((doc) => {
       const data = doc.data();
+      
       notes.push({
         ...data,
         id: doc.id,
@@ -74,25 +99,28 @@ export const loadNotes = async (): Promise<Note[]> => {
       } as Note);
     });
     
-    console.log('Loaded notes from Firebase:', notes.length);
+    logSuccess(`Loaded ${notes.length} notes from Firebase`);
     return notes;
   } catch (error) {
-    console.error('Error loading notes:', error);
+    handleFirebaseError(error, 'load notes');
     return [];
   }
 };
 
-export const deleteNoteFromFirebase = async (noteId: string): Promise<void> => {
+export const deleteNote = async (noteId: string): Promise<void> => {
   try {
     const userId = getUserId();
     const noteRef = doc(db!, 'users', userId, 'notes', noteId);
     await deleteDoc(noteRef);
-    console.log('Note deleted from Firebase:', noteId);
+    logSuccess(`Note deleted from Firebase: ${noteId}`);
   } catch (error) {
-    console.error('Error deleting note:', error);
+    handleFirebaseError(error, 'delete note');
     throw error;
   }
 };
+
+// Alias for backward compatibility
+export const deleteNoteFromFirebase = deleteNote;
 
 // Projects operations
 export const saveProject = async (project: Project): Promise<void> => {
@@ -108,9 +136,12 @@ export const saveProject = async (project: Project): Promise<void> => {
     };
     
     await setDoc(projectRef, projectData);
-    console.log('Project saved to Firebase:', project.id);
+    logSuccess(`Project saved to Firebase: ${project.id}`, {
+      projectId: project.id,
+      name: project.name
+    });
   } catch (error) {
-    console.error('Error saving project:', error);
+    handleFirebaseError(error, 'save project');
     throw error;
   }
 };
@@ -134,10 +165,10 @@ export const loadProjects = async (): Promise<Project[]> => {
       } as Project);
     });
     
-    console.log('Loaded projects from Firebase:', projects.length);
+    logSuccess(`Loaded ${projects.length} projects from Firebase`);
     return projects;
   } catch (error) {
-    console.error('Error loading projects:', error);
+    handleFirebaseError(error, 'load projects');
     return [];
   }
 };
@@ -147,9 +178,9 @@ export const deleteProjectFromFirebase = async (projectId: string): Promise<void
     const userId = getUserId();
     const projectRef = doc(db!, 'users', userId, 'projects', projectId);
     await deleteDoc(projectRef);
-    console.log('Project deleted from Firebase:', projectId);
+    logSuccess(`Project deleted from Firebase: ${projectId}`);
   } catch (error) {
-    console.error('Error deleting project:', error);
+    handleFirebaseError(error, 'delete project');
     throw error;
   }
 };
@@ -168,9 +199,12 @@ export const saveFolder = async (folder: Folder): Promise<void> => {
     };
     
     await setDoc(folderRef, folderData);
-    console.log('Folder saved to Firebase:', folder.id);
+    logSuccess(`Folder saved to Firebase: ${folder.id}`, {
+      folderId: folder.id,
+      name: folder.name
+    });
   } catch (error) {
-    console.error('Error saving folder:', error);
+    handleFirebaseError(error, 'save folder');
     throw error;
   }
 };
@@ -179,7 +213,7 @@ export const loadFolders = async (): Promise<Folder[]> => {
   try {
     const userId = getUserId();
     const foldersRef = collection(db!, 'users', userId, 'folders');
-    const q = query(foldersRef, orderBy('name', 'asc'));
+    const q = query(foldersRef, orderBy('order', 'asc'));
     
     const snapshot = await getDocs(q);
     const folders: Folder[] = [];
@@ -200,10 +234,10 @@ export const loadFolders = async (): Promise<Folder[]> => {
       });
     });
     
-    console.log('Loaded folders from Firebase:', folders.length);
+    logSuccess(`Loaded ${folders.length} folders from Firebase`);
     return folders;
   } catch (error) {
-    console.error('Error loading folders:', error);
+    handleFirebaseError(error, 'load folders');
     return [];
   }
 };
@@ -214,9 +248,9 @@ export const deleteFolderFromFirebase = async (folderId: string): Promise<void> 
     const userId = getUserId();
     const folderRef = doc(db!, 'users', userId, 'folders', folderId);
     await deleteDoc(folderRef);
-    console.log('Folder deleted from Firebase:', folderId);
+    logSuccess(`Folder deleted from Firebase: ${folderId}`);
   } catch (error) {
-    console.error('Error deleting folder:', error);
+    handleFirebaseError(error, 'delete folder');
     throw error;
   }
 };

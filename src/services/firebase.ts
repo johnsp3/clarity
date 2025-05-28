@@ -2,6 +2,7 @@ import { initializeApp, FirebaseApp } from 'firebase/app'
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, Auth, User } from 'firebase/auth'
 import { getFirestore, Firestore } from 'firebase/firestore'
 import { getStorage, FirebaseStorage } from 'firebase/storage'
+import { handleFirebaseError, logSuccess, errorLogger } from './errorHandling'
 
 interface FirebaseConfig {
   apiKey: string
@@ -64,7 +65,13 @@ const initializeFirebase = (): boolean => {
   const firebaseConfig = getFirebaseConfig()
   
   if (!firebaseConfig) {
-    console.log('No Firebase configuration found')
+    errorLogger.log({
+      message: 'No Firebase configuration found',
+      severity: 'warning',
+      category: 'firebase',
+      userMessage: 'Firebase is not configured',
+      action: 'Run the setup wizard to configure Firebase'
+    })
     return false
   }
   
@@ -79,10 +86,13 @@ const initializeFirebase = (): boolean => {
     firebase.googleProvider.addScope('email')
     firebase.googleProvider.addScope('profile')
     
-    console.log('Firebase initialized successfully')
+    // Only log to console, not to the error notification system
+    console.log('Firebase initialized successfully', {
+      projectId: firebaseConfig.projectId
+    })
     return true
   } catch (error) {
-    console.error('Error initializing Firebase:', error)
+    handleFirebaseError(error, 'initialization')
     return false
   }
 }
@@ -109,29 +119,53 @@ export const getAuthorizedEmail = (): string | null => {
 // Auth functions with better error handling
 export const signInWithGoogle = async (): Promise<User> => {
   if (!firebase.auth || !firebase.googleProvider) {
-    throw new Error('Firebase not initialized')
+    const error = new Error('Firebase not initialized')
+    handleFirebaseError(error, 'authentication')
+    throw error
   }
   
   try {
+    errorLogger.log({
+      message: 'Starting Google sign-in',
+      severity: 'info',
+      category: 'auth'
+    })
+    
     const result = await signInWithPopup(firebase.auth, firebase.googleProvider)
     const userEmail = result.user.email
     const authorizedEmail = getAuthorizedEmail()
     
     if (!userEmail) {
       await signOut(firebase.auth)
-      throw new Error('No email found in Google account')
+      const error = new Error('No email found in Google account')
+      handleFirebaseError(error, 'authentication')
+      throw error
     }
     
     if (userEmail !== authorizedEmail) {
       await signOut(firebase.auth)
+      const error = {
+        message: 'Unauthorized email address',
+        code: 'auth/unauthorized-email'
+      }
+      handleFirebaseError(error, 'authentication')
       throw new Error('Unauthorized email address')
     }
     
+    logSuccess('User signed in successfully', {
+      email: userEmail,
+      uid: result.user.uid
+    })
+    
     return result.user
   } catch (error) {
-    console.error('Sign in error:', error)
+    // Don't double-log if we already handled it above
+    const err = error as any
+    if (!err.message?.includes('Unauthorized email') && !err.message?.includes('No email found')) {
+      handleFirebaseError(error, 'authentication')
+    }
     
-    // Handle specific Firebase auth errors
+    // Re-throw with user-friendly message
     const authError = error as { code?: string; message?: string }
     if (authError.code === 'auth/popup-closed-by-user') {
       throw new Error('Sign in was cancelled')
@@ -147,13 +181,16 @@ export const signInWithGoogle = async (): Promise<User> => {
 
 export const signOutUser = async (): Promise<void> => {
   if (!firebase.auth) {
-    throw new Error('Firebase not initialized')
+    const error = new Error('Firebase not initialized')
+    handleFirebaseError(error, 'authentication')
+    throw error
   }
   
   try {
     await signOut(firebase.auth)
+    logSuccess('User signed out successfully')
   } catch (error) {
-    console.error('Sign out error:', error)
+    handleFirebaseError(error, 'sign-out')
     throw new Error('Failed to sign out. Please try again.')
   }
 }

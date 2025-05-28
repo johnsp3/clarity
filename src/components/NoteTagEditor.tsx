@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import { X, Plus, Tag as TagIcon } from 'lucide-react'
 import * as Popover from '@radix-ui/react-popover'
-import { useStore } from '../store/useStore'
+import { useStore, getNextAvailableColor } from '../store/useStore'
 
 interface NoteTagEditorProps {
   noteId: string
@@ -20,6 +20,9 @@ export const NoteTagEditor: React.FC<NoteTagEditorProps> = ({ noteId, noteTags }
   )
 
   const selectedTags = tags.filter(tag => noteTags.includes(tag.id))
+  
+  // Get the color that would be assigned to a new tag
+  const nextTagColor = getNextAvailableColor(tags)
 
   const handleAddTag = (tagId: string) => {
     updateNote(noteId, { tags: [...noteTags, tagId] })
@@ -107,8 +110,8 @@ export const NoteTagEditor: React.FC<NoteTagEditorProps> = ({ noteId, noteTags }
                   className="w-full flex items-center gap-2 px-3 py-2 text-sm text-left 
                            hover:bg-gray-50 rounded-lg transition-colors"
                 >
-                  <div className="w-6 h-6 rounded bg-gradient-to-r from-blue-400 to-blue-600 
-                                flex items-center justify-center">
+                  <div className={`w-6 h-6 rounded bg-gradient-to-r ${nextTagColor} 
+                                flex items-center justify-center`}>
                     <Plus size={12} strokeWidth={1.5} className="text-white" />
                   </div>
                   <span className="text-gray-700">

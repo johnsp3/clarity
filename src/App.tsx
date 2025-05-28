@@ -7,6 +7,8 @@ import { Editor } from './components/Editor'
 import { CommandPalette } from './components/CommandPalette'
 import { ErrorBoundary } from './components/ErrorBoundary'
 import { SkipLinks } from './components/SkipLinks'
+import { ErrorNotificationManager } from './components/ErrorNotification'
+import { StatusIndicator } from './components/StatusIndicator'
 
 import { SearchPanel } from './components/SearchPanel'
 import { SettingsPanel } from './components/SettingsPanel'
@@ -66,8 +68,13 @@ function App() {
           // Load data from Firebase when user is authenticated
           try {
             await loadDataFromFirebase();
-            // Run migration after data is loaded
-            await migrateExistingNotes();
+            // Run migration only if it hasn't been run before
+            const migrationKey = 'clarity-notes-migrated-v1';
+            if (!localStorage.getItem(migrationKey)) {
+              console.log('Running one-time migration...');
+              await migrateExistingNotes();
+              localStorage.setItem(migrationKey, 'true');
+            }
           } catch (error) {
             console.error('Failed to load data:', error);
           }
@@ -243,10 +250,10 @@ function App() {
   }
 
   return (
-    <>
+    <ErrorBoundary>
       <SkipLinks />
       <div className="flex h-screen bg-[var(--bg-secondary)] overflow-hidden">
-        <ErrorBoundary level="section" isolate>
+        <ErrorBoundary>
           <div id="sidebar-navigation">
             <EnhancedSidebar 
               onShowSearch={() => setShowSearch(true)}
@@ -255,7 +262,7 @@ function App() {
             />
           </div>
         </ErrorBoundary>
-        <ErrorBoundary level="section" isolate>
+        <ErrorBoundary>
           <div id="notes-list">
             <EnhancedNoteList />
           </div>
@@ -270,15 +277,23 @@ function App() {
               <button
                 onClick={() => setCommandPaletteOpen(true)}
                 className="search-apple flex items-center gap-3 hover-lift"
+                style={{
+                  width: '320px',
+                  justifyContent: 'space-between',
+                  padding: '10px 16px'
+                }}
                 aria-label="Open command palette to search notes and projects"
               >
-                <Search size={16} className="text-[var(--text-tertiary)]" aria-hidden="true" />
-                <span className="flex-1 text-left text-[var(--text-secondary)]">Search notes, projects...</span>
-                <span className="text-[13px] text-[var(--text-tertiary)] bg-[var(--bg-hover)] px-2 py-1 rounded font-medium" aria-label="Keyboard shortcut Command K">⌘K</span>
+                <Search size={16} className="text-[var(--text-tertiary)] flex-shrink-0" aria-hidden="true" />
+                <span className="text-[var(--text-secondary)] text-center flex-1">Search notes, projects, tags...</span>
+                <span className="text-[13px] text-[var(--text-tertiary)] bg-[var(--bg-hover)] px-2 py-1 rounded font-medium flex-shrink-0" aria-label="Keyboard shortcut Command K">⌘K</span>
               </button>
             </div>
             
             <div className="flex items-center gap-3">
+              
+              {/* Status Indicator */}
+              <StatusIndicator />
               
               {/* Settings Button */}
               <button
@@ -294,17 +309,25 @@ function App() {
               <button
                 onClick={handleCreateNote}
                 className="btn-apple-primary hover-lift"
+                style={{ 
+                  padding: '12px 40px',
+                  fontSize: '16px',
+                  whiteSpace: 'nowrap',
+                  display: 'flex',
+                  alignItems: 'center',
+                  minWidth: 'fit-content'
+                }}
                 aria-label="Create new note"
               >
-                <Plus size={16} className="mr-2" aria-hidden="true" />
-                Create Note
+                <Plus size={18} className="mr-2 flex-shrink-0" aria-hidden="true" />
+                <span style={{ whiteSpace: 'nowrap' }}>Create Note</span>
               </button>
             </div>
           </header>
           
           {/* Editor content */}
           <main id="main-content" className="flex-1 bg-[var(--bg-primary)] min-h-0 overflow-hidden" role="main">
-            <ErrorBoundary level="section" isolate>
+            <ErrorBoundary>
               <Editor 
                 onShowImport={() => setShowImport(true)}
                 onExportNotes={handleExportNotes}
@@ -336,8 +359,9 @@ function App() {
         isOpen={showImport}
         onOpenChange={setShowImport}
       />
+      <ErrorNotificationManager />
     </div>
-    </>
+    </ErrorBoundary>
   );
 }
 

@@ -38,7 +38,7 @@ export const AIEdit: React.FC<AIEditProps> = ({ content, onRewrite }) => {
   const [isTesting, setIsTesting] = useState(false)
   const [customPrompt, setCustomPrompt] = useState('')
   const [recentPrompts, setRecentPrompts] = useState<string[]>([])
-  const [activeCategory, setActiveCategory] = useState<'tone' | 'enhance' | 'format' | 'custom' | 'test' | 'presets'>('tone')
+  const [activeCategory, setActiveCategory] = useState<'tone' | 'enhance' | 'custom' | 'test' | 'presets'>('presets')
   const [lastUsage, setLastUsage] = useState<{ prompt_tokens: number; completion_tokens: number; total_tokens: number } | null>(null)
   const [testResult, setTestResult] = useState<string>('')
   const [focusedItemIndex, setFocusedItemIndex] = useState(0)
@@ -245,11 +245,6 @@ export const AIEdit: React.FC<AIEditProps> = ({ content, onRewrite }) => {
       { key: 'improve', label: 'Improve Clarity', icon: Lightbulb, emoji: '💡' },
       { key: 'simplify', label: 'Simplify Language', icon: Target, emoji: '🎯' }
     ],
-    format: [
-      { key: 'markdown', label: 'Beautiful Markdown Format', icon: Hash, emoji: '✨' },
-      { key: 'html', label: 'Convert to HTML', icon: Code, emoji: '<>' },
-      { key: 'plain', label: 'Convert to Plain Text', icon: FileText, emoji: '📄' }
-    ],
     presets: [
       { key: 'markdown', label: 'Beautiful Markdown Format', icon: Hash, emoji: '✨' },
       { key: 'plain', label: 'Beautiful Plain Text Format', icon: FileText, emoji: '📄' },
@@ -258,12 +253,11 @@ export const AIEdit: React.FC<AIEditProps> = ({ content, onRewrite }) => {
   }
 
   const categories = [
+    { key: 'presets' as const, label: 'Presets', icon: Hash },
     { key: 'tone' as const, label: 'Tone & Style', icon: Smile },
     { key: 'enhance' as const, label: 'Enhance', icon: Zap },
-    { key: 'format' as const, label: 'Format', icon: Code },
     { key: 'custom' as const, label: 'Custom', icon: Edit3 },
-    { key: 'test' as const, label: 'Test', icon: TestTube },
-    { key: 'presets' as const, label: 'Presets', icon: Hash }
+    { key: 'test' as const, label: 'Test', icon: TestTube }
   ]
 
   return (

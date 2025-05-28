@@ -2,7 +2,7 @@ import React, { useState } from 'react'
 import { 
   Plus, Grid, List as ListIcon, AlignLeft, SortDesc,
   Calendar, Edit2, Star, Check, X,
-  FileText, Image, Code
+  FileText, Image, Code, Hash
 } from 'lucide-react'
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu'
 import * as Checkbox from '@radix-ui/react-checkbox'
@@ -33,6 +33,9 @@ export const EnhancedNoteList: React.FC = () => {
     favoriteNoteIds,
     toggleFavorite,
     activeFolderId,
+    searchFilters,
+    tags,
+    setSearchFilters,
   } = useOptimizedStore()
 
   const [isCreatingNote, setIsCreatingNote] = useState(false)
@@ -84,8 +87,6 @@ export const EnhancedNoteList: React.FC = () => {
     }
   }
 
-
-
   const formatDate = (date: Date) => {
     const now = new Date()
     const diff = now.getTime() - date.getTime()
@@ -109,7 +110,7 @@ export const EnhancedNoteList: React.FC = () => {
 
     return (
       <div
-        className={`group p-4 rounded-lg bg-white border cursor-pointer
+        className={`group p-4 rounded-lg bg-white border cursor-pointer relative
                   transition-all duration-200 ${
                     isActive
                       ? 'border-blue-500 shadow-sm'
@@ -124,23 +125,6 @@ export const EnhancedNoteList: React.FC = () => {
           } ${isSelected ? 'text-blue-600 font-medium' : ''}`}>
             {note.title}
           </h3>
-          
-          <Checkbox.Root
-            checked={isSelected}
-            onCheckedChange={() => toggleNoteSelection(note.id)}
-            onClick={(e) => e.stopPropagation()}
-            className={`w-5 h-5 rounded-md border-2 flex-shrink-0 flex items-center justify-center cursor-pointer
-                     transition-all duration-200 ease-out ${
-                       selectedNoteIds.size > 0 ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
-                     } ${isSelected 
-                       ? 'border-[var(--accent-primary)] bg-[var(--accent-primary)] shadow-sm' 
-                       : 'border-gray-300 bg-white hover:border-[var(--accent-primary)] hover:bg-blue-50'
-                     }`}
-          >
-            <Checkbox.Indicator className="flex items-center justify-center">
-              <Check className="w-3.5 h-3.5 text-white font-bold" strokeWidth={3} />
-            </Checkbox.Indicator>
-          </Checkbox.Root>
         </div>
 
         {/* Content preview */}
@@ -170,6 +154,24 @@ export const EnhancedNoteList: React.FC = () => {
             </button>
           </div>
         </div>
+
+        {/* Selection checkbox - moved to bottom right */}
+        <Checkbox.Root
+          checked={isSelected}
+          onCheckedChange={() => toggleNoteSelection(note.id)}
+          onClick={(e) => e.stopPropagation()}
+          className={`absolute bottom-3 right-3 w-5 h-5 rounded-full border-2 flex items-center justify-center cursor-pointer
+                   transition-all duration-200 ease-out ${
+                     selectedNoteIds.size > 0 || isSelected ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
+                   } ${isSelected 
+                     ? 'border-[var(--accent-primary)] bg-[var(--accent-primary)] shadow-sm' 
+                     : 'border-gray-300 bg-white hover:border-[var(--accent-primary)] hover:bg-blue-50'
+                   }`}
+        >
+          <Checkbox.Indicator className="flex items-center justify-center">
+            <Check className="w-3.5 h-3.5 text-white font-bold" strokeWidth={3} />
+          </Checkbox.Indicator>
+        </Checkbox.Root>
       </div>
     )
   }
@@ -191,23 +193,6 @@ export const EnhancedNoteList: React.FC = () => {
         onClick={() => setActiveNote(note.id)}
       >
         <div className="flex items-center gap-3">
-          <Checkbox.Root
-            checked={isSelected}
-            onCheckedChange={() => toggleNoteSelection(note.id)}
-            onClick={(e) => e.stopPropagation()}
-            className={`w-5 h-5 rounded-md border-2 flex items-center justify-center cursor-pointer
-                     transition-all duration-200 ease-out ${
-                       selectedNoteIds.size > 0 ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
-                     } ${isSelected 
-                       ? 'border-[var(--accent-primary)] bg-[var(--accent-primary)] shadow-sm' 
-                       : 'border-gray-300 bg-white hover:border-[var(--accent-primary)] hover:bg-blue-50'
-                     }`}
-          >
-            <Checkbox.Indicator className="flex items-center justify-center">
-              <Check className="w-3.5 h-3.5 text-white font-bold" strokeWidth={3} />
-            </Checkbox.Indicator>
-          </Checkbox.Root>
-
           <FileText size={14} className="text-gray-500 flex-shrink-0" />
           
           <span className={`flex-1 truncate text-[15px] ${
@@ -232,13 +217,31 @@ export const EnhancedNoteList: React.FC = () => {
               <Star size={12} fill={isFavorite ? 'currentColor' : 'none'} />
             </button>
           </div>
+
+          {/* Selection checkbox - moved to the right */}
+          <Checkbox.Root
+            checked={isSelected}
+            onCheckedChange={() => toggleNoteSelection(note.id)}
+            onClick={(e) => e.stopPropagation()}
+            className={`w-5 h-5 rounded-full border-2 flex items-center justify-center cursor-pointer
+                     transition-all duration-200 ease-out ${
+                       selectedNoteIds.size > 0 || isSelected ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
+                     } ${isSelected 
+                       ? 'border-[var(--accent-primary)] bg-[var(--accent-primary)] shadow-sm' 
+                       : 'border-gray-300 bg-white hover:border-[var(--accent-primary)] hover:bg-blue-50'
+                     }`}
+          >
+            <Checkbox.Indicator className="flex items-center justify-center">
+              <Check className="w-3.5 h-3.5 text-white font-bold" strokeWidth={3} />
+            </Checkbox.Indicator>
+          </Checkbox.Root>
         </div>
       </div>
     )
   }
 
   return (
-    <div className="w-80 flex flex-col h-screen bg-[var(--bg-primary)] border-r border-[var(--border-light)] shadow-[var(--shadow-xs)] overflow-hidden" role="region" aria-label="Notes list">
+    <div className="w-[400px] flex flex-col h-screen bg-[var(--bg-primary)] border-r border-[var(--border-light)] shadow-[var(--shadow-xs)] overflow-hidden" role="region" aria-label="Notes list">
       {/* Breadcrumb Navigation */}
       <div className="flex-shrink-0">
         <BreadcrumbNav />
@@ -246,7 +249,7 @@ export const EnhancedNoteList: React.FC = () => {
       
       {/* Header */}
       <div className="border-b border-[var(--border-light)] p-6 bg-[var(--bg-primary)] flex-shrink-0">
-        <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center justify-between">
           <div>
             {activeProjectId ? (
               <>
@@ -268,10 +271,10 @@ export const EnhancedNoteList: React.FC = () => {
           <div className="flex items-center gap-2">
             <DropdownMenu.Root>
               <DropdownMenu.Trigger asChild>
-                <button className="btn-apple-ghost text-[13px] px-3 py-2" aria-label={`Sort by ${viewMode.sortBy}, ${viewMode.sortOrder === 'asc' ? 'ascending' : 'descending'}`}>
+                <button className="btn-apple-ghost text-[13px] px-3 py-2 flex items-center gap-1" aria-label={`Sort by ${viewMode.sortBy}, ${viewMode.sortOrder === 'asc' ? 'ascending' : 'descending'}`}>
                   <SortDesc size={14} className={viewMode.sortOrder === 'asc' ? 'rotate-180' : ''} aria-hidden="true" />
-                  Sort
-                  <span className="text-[11px] text-gray-500 ml-1">
+                  <span>Sort</span>
+                  <span className="text-[11px] text-gray-500">
                     ({viewMode.sortBy === 'modified' ? 'Modified' : 
                       viewMode.sortBy === 'created' ? 'Created' : 
                       viewMode.sortBy === 'title' ? 'Title' : 'Manual'})
@@ -375,9 +378,49 @@ export const EnhancedNoteList: React.FC = () => {
           </div>
         </div>
 
+        {/* Tag Filter Indicator */}
+        {searchFilters.tags && searchFilters.tags.length > 0 && (
+          <div className="mt-4 flex items-center gap-2 flex-wrap">
+            <span className="text-[13px] text-gray-600">Filtered by:</span>
+            {searchFilters.tags.map(tagId => {
+              const tag = tags.find(t => t.id === tagId)
+              if (!tag) return null
+              return (
+                <div
+                  key={tag.id}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 text-xs bg-gradient-to-r ${tag.color} 
+                           text-white rounded-full font-medium group hover:scale-105 transition-transform`}
+                >
+                  <Hash size={12} strokeWidth={1.5} />
+                  {tag.name}
+                  <button
+                    onClick={() => {
+                      const newTags = searchFilters.tags?.filter(id => id !== tagId) || []
+                      setSearchFilters({
+                        ...searchFilters,
+                        tags: newTags.length > 0 ? newTags : undefined
+                      })
+                    }}
+                    className="ml-1 opacity-70 hover:opacity-100 transition-opacity"
+                    aria-label={`Remove ${tag.name} filter`}
+                  >
+                    <X size={12} strokeWidth={2} />
+                  </button>
+                </div>
+              )
+            })}
+            <button
+              onClick={() => setSearchFilters({ ...searchFilters, tags: undefined })}
+              className="text-[13px] text-blue-600 hover:text-blue-700 font-medium transition-colors"
+            >
+              Clear all
+            </button>
+          </div>
+        )}
+
         {/* Premium Selection Actions */}
         {selectedNoteIds.size > 0 && (
-          <div className="flex items-center justify-between bg-[var(--accent-primary-light)] border border-[var(--accent-primary-border)] rounded-lg px-4 py-3 shadow-[var(--shadow-sm)]">
+          <div className="flex items-center justify-between bg-[var(--accent-primary-light)] border border-[var(--accent-primary-border)] rounded-lg px-4 py-3 shadow-[var(--shadow-sm)] mt-6">
             <span className="text-[13px] font-semibold text-[var(--accent-primary)]">
               {selectedNoteIds.size} selected
             </span>
@@ -406,7 +449,7 @@ export const EnhancedNoteList: React.FC = () => {
 
         {/* New Note Input */}
         {isCreatingNote ? (
-          <div className="flex items-center gap-3 mt-4">
+          <div className="flex items-center gap-3 mt-6">
             <input
               type="text"
               value={newNoteTitle}
@@ -440,7 +483,7 @@ export const EnhancedNoteList: React.FC = () => {
         ) : (
           <button
             onClick={() => setIsCreatingNote(true)}
-            className="btn-apple-ghost w-full flex items-center gap-3 px-4 py-3 mt-4"
+            className="btn-apple-ghost w-full flex items-center gap-3 px-4 py-3 mt-6"
           >
             <Plus size={18} />
             <span>New Note</span>
@@ -481,6 +524,7 @@ export const EnhancedNoteList: React.FC = () => {
                     isActive={activeNoteId === note.id}
                     isSelected={selectedNoteIds.has(note.id)}
                     isFavorite={favoriteNoteIds.has(note.id)}
+                    hasSelectedNotes={selectedNoteIds.size > 0}
                     onClick={() => setActiveNote(note.id)}
                     onToggleSelection={() => toggleNoteSelection(note.id)}
                     onToggleFavorite={() => toggleFavorite(note.id)}

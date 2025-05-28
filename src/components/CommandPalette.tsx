@@ -75,10 +75,17 @@ export const CommandPalette: React.FC = () => {
       const titleMatch = note.title.toLowerCase().includes(lowerQuery)
       const contentMatch = note.content.toLowerCase().includes(lowerQuery)
       
-      if (titleMatch || contentMatch) {
+      // Check if any of the note's tags match the query
+      const tagMatch = note.tags.some(tagId => {
+        const tag = tags.find(t => t.id === tagId)
+        return tag && tag.name.toLowerCase().includes(lowerQuery)
+      })
+      
+      if (titleMatch || contentMatch || tagMatch) {
         const matches: string[] = []
         if (titleMatch) matches.push('title')
         if (contentMatch) matches.push('content')
+        if (tagMatch) matches.push('tags')
         
         results.notes.push({
           type: 'note',
@@ -90,7 +97,10 @@ export const CommandPalette: React.FC = () => {
 
     // Search projects
     projects.forEach(project => {
-      if (project.name.toLowerCase().includes(lowerQuery)) {
+      const nameMatch = project.name.toLowerCase().includes(lowerQuery)
+      const descriptionMatch = project.description?.toLowerCase().includes(lowerQuery) || false
+      
+      if (nameMatch || descriptionMatch) {
         results.projects.push({
           type: 'project',
           item: project,
@@ -207,9 +217,16 @@ export const CommandPalette: React.FC = () => {
       case 'project':
         setActiveProject((result.item as Project).id)
         break
-      case 'tag':
-        // Handle tag selection
+      case 'tag': {
+        // Apply tag filter
+        const tag = result.item as Tag
+        const currentFilters = useStore.getState().searchFilters
+        useStore.getState().setSearchFilters({
+          ...currentFilters,
+          tags: [tag.id]
+        })
         break
+      }
     }
 
     setCommandPaletteOpen(false)
@@ -310,6 +327,9 @@ export const CommandPalette: React.FC = () => {
       
       case 'tag': {
         const tag = result.item as Tag
+        // Calculate actual usage count dynamically
+        const actualUsageCount = notes.filter(note => note.tags.includes(tag.id)).length
+        
         return (
           <button
             key={`tag-${tag.id}`}
@@ -330,7 +350,7 @@ export const CommandPalette: React.FC = () => {
                 {highlightMatch(tag.name, query)}
               </div>
               <div className="text-sm text-[#6B6B6B]">
-                {tag.usageCount} {tag.usageCount === 1 ? 'note' : 'notes'}
+                {actualUsageCount} {actualUsageCount === 1 ? 'note' : 'notes'}
               </div>
             </div>
           </button>

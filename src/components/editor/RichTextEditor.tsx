@@ -44,6 +44,71 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({ note, onUpdate, 
 
   const previewContentRef = useRef<string>('')
 
+  // Format timestamp for display
+  const formatTimestamp = (date: Date): string => {
+    const now = new Date()
+    const diffMs = now.getTime() - date.getTime()
+    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24))
+    
+    // If it's today, show time
+    if (diffDays === 0) {
+      return `Today at ${date.toLocaleTimeString('en-US', { 
+        hour: 'numeric', 
+        minute: '2-digit',
+        hour12: true 
+      })}`
+    }
+    
+    // If it's yesterday
+    if (diffDays === 1) {
+      return `Yesterday at ${date.toLocaleTimeString('en-US', { 
+        hour: 'numeric', 
+        minute: '2-digit',
+        hour12: true 
+      })}`
+    }
+    
+    // If it's within this year, don't show year
+    if (date.getFullYear() === now.getFullYear()) {
+      return date.toLocaleDateString('en-US', { 
+        month: 'short', 
+        day: 'numeric',
+        hour: 'numeric',
+        minute: '2-digit',
+        hour12: true
+      })
+    }
+    
+    // Otherwise show full date
+    return date.toLocaleDateString('en-US', { 
+      year: 'numeric', 
+      month: 'short', 
+      day: 'numeric',
+      hour: 'numeric',
+      minute: '2-digit',
+      hour12: true
+    })
+  }
+
+  // Calculate time since creation
+  const getTimeSinceCreation = (): string => {
+    const diffMs = note.updatedAt.getTime() - note.createdAt.getTime()
+    const diffMinutes = Math.floor(diffMs / (1000 * 60))
+    const diffHours = Math.floor(diffMs / (1000 * 60 * 60))
+    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24))
+    
+    if (diffMinutes < 1) return 'just created'
+    if (diffMinutes < 60) return `${diffMinutes} minute${diffMinutes > 1 ? 's' : ''} after creation`
+    if (diffHours < 24) return `${diffHours} hour${diffHours > 1 ? 's' : ''} after creation`
+    if (diffDays < 30) return `${diffDays} day${diffDays > 1 ? 's' : ''} after creation`
+    
+    const diffMonths = Math.floor(diffDays / 30)
+    if (diffMonths < 12) return `${diffMonths} month${diffMonths > 1 ? 's' : ''} after creation`
+    
+    const diffYears = Math.floor(diffMonths / 12)
+    return `${diffYears} year${diffYears > 1 ? 's' : ''} after creation`
+  }
+
   // Initialize optimized Tiptap editor
   const editor = useOptimizedEditor({
     content,
@@ -567,7 +632,7 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({ note, onUpdate, 
               </span>
             ) : lastSaved ? (
               <span className="text-xs text-gray-500">
-                Saved {new Date(lastSaved).toLocaleTimeString()}
+                Saved {formatTimestamp(lastSaved)}
               </span>
             ) : null}
 
@@ -764,6 +829,54 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({ note, onUpdate, 
               className="w-full text-3xl font-bold text-gray-900 placeholder-gray-400 
                        focus:outline-none bg-transparent"
             />
+            
+            {/* Timestamp Display */}
+            <div className="mt-3 flex items-center gap-4 text-sm text-gray-500">
+              <div className="flex items-center gap-1.5 group">
+                <svg className="w-4 h-4 text-gray-400 group-hover:text-gray-600 transition-colors" 
+                     fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} 
+                        d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <span className="group-hover:text-gray-700 transition-colors" 
+                      title={note.createdAt.toLocaleString('en-US', { 
+                        weekday: 'long',
+                        year: 'numeric', 
+                        month: 'long', 
+                        day: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                        second: '2-digit'
+                      })}>
+                  Created: {formatTimestamp(note.createdAt)}
+                </span>
+              </div>
+              
+              <div className="w-px h-4 bg-gray-300" />
+              
+              <div className="flex items-center gap-1.5 group">
+                <svg className="w-4 h-4 text-gray-400 group-hover:text-gray-600 transition-colors" 
+                     fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} 
+                        d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                </svg>
+                <span className="group-hover:text-gray-700 transition-colors"
+                      title={note.updatedAt.toLocaleString('en-US', { 
+                        weekday: 'long',
+                        year: 'numeric', 
+                        month: 'long', 
+                        day: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                        second: '2-digit'
+                      }) + ` (${getTimeSinceCreation()})`}>
+                  Modified: {formatTimestamp(note.updatedAt)}
+                  {note.createdAt.getTime() !== note.updatedAt.getTime() && (
+                    <span className="text-gray-400 ml-1">({getTimeSinceCreation()})</span>
+                  )}
+                </span>
+              </div>
+            </div>
           </div>
 
           {/* Tiptap Editor */}

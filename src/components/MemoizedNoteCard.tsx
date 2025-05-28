@@ -7,6 +7,7 @@ interface MemoizedNoteCardProps {
   isActive: boolean
   isSelected: boolean
   isFavorite: boolean
+  hasSelectedNotes?: boolean
   onClick: () => void
   onToggleSelection: () => void
   onToggleFavorite: () => void
@@ -17,6 +18,7 @@ const MemoizedNoteCard: React.FC<MemoizedNoteCardProps> = memo(({
   isActive,
   isSelected,
   isFavorite,
+  hasSelectedNotes = false,
   onClick,
   onToggleSelection,
   onToggleFavorite
@@ -28,6 +30,39 @@ const MemoizedNoteCard: React.FC<MemoizedNoteCardProps> = memo(({
   const noteTags = note.tags
     .map(tagId => tags.find(tag => tag.id === tagId))
     .filter((tag): tag is NonNullable<typeof tag> => tag !== undefined)
+
+  // Format timestamp for display
+  const formatTimestamp = (date: Date): string => {
+    const now = new Date()
+    const diffMs = now.getTime() - date.getTime()
+    const diffMinutes = Math.floor(diffMs / (1000 * 60))
+    const diffHours = Math.floor(diffMs / (1000 * 60 * 60))
+    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24))
+    
+    if (diffMinutes < 1) return 'just now'
+    if (diffMinutes < 60) return `${diffMinutes}m ago`
+    if (diffHours < 24) return `${diffHours}h ago`
+    if (diffDays < 7) return `${diffDays}d ago`
+    
+    // For older dates, show the actual date
+    if (date.getFullYear() === now.getFullYear()) {
+      return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+    }
+    return date.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })
+  }
+
+  // Get full timestamp for tooltip
+  const getFullTimestamp = (date: Date): string => {
+    return date.toLocaleString('en-US', { 
+      weekday: 'long',
+      year: 'numeric', 
+      month: 'long', 
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit'
+    })
+  }
 
   return (
     <div
@@ -43,17 +78,6 @@ const MemoizedNoteCard: React.FC<MemoizedNoteCardProps> = memo(({
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
-      {/* Selection checkbox */}
-      <div className="absolute top-4 left-4 opacity-0 group-hover:opacity-100 transition-opacity">
-        <input
-          type="checkbox"
-          checked={isSelected}
-          onChange={onToggleSelection}
-          onClick={(e) => e.stopPropagation()}
-          className="w-4 h-4 text-cyan-600 bg-gray-100 border-gray-300 rounded focus:ring-cyan-500"
-        />
-      </div>
-
       {/* Favorite button */}
       <button
         onClick={(e) => {
@@ -153,13 +177,31 @@ const MemoizedNoteCard: React.FC<MemoizedNoteCardProps> = memo(({
       
       {/* Status Bar */}
       <div className="flex items-center justify-between text-xs text-gray-500">
-        <div className="flex items-center gap-3">
-          <span className="flex items-center gap-1">
-            <Clock className="w-3 h-3" />
-            {note.metadata?.lastEditedRelative || 'just now'}
+        <div className="flex items-center gap-2">
+          {/* Timestamp display */}
+          <span className="flex items-center gap-1 group/time" title={getFullTimestamp(note.updatedAt)}>
+            <Clock className="w-3 h-3 group-hover/time:text-gray-700 transition-colors" />
+            <span className="group-hover/time:text-gray-700 transition-colors">
+              {formatTimestamp(note.updatedAt)}
+            </span>
           </span>
+          
+          {/* Separator */}
+          <span className="text-gray-300">•</span>
+          
+          {/* Word count */}
           <span>{note.metadata?.wordCount || 0} words</span>
+          
+          {/* Show if modified after creation */}
+          {note.createdAt.getTime() !== note.updatedAt.getTime() && (
+            <>
+              <span className="text-gray-300">•</span>
+              <span className="text-gray-400 italic text-[11px]">edited</span>
+            </>
+          )}
         </div>
+        
+        {/* Completion percentage for checklists */}
         {note.metadata?.hasCheckboxes && (
           <div className="flex items-center gap-1">
             <div className="w-16 h-1.5 bg-gray-200 rounded-full overflow-hidden">
@@ -171,6 +213,19 @@ const MemoizedNoteCard: React.FC<MemoizedNoteCardProps> = memo(({
             <span className="text-xs text-gray-600">{note.metadata.completionPercentage || 0}%</span>
           </div>
         )}
+      </div>
+
+      {/* Selection checkbox - moved to bottom right */}
+      <div className={`absolute bottom-4 right-4 transition-opacity ${
+        hasSelectedNotes || isSelected ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
+      }`}>
+        <input
+          type="checkbox"
+          checked={isSelected}
+          onChange={onToggleSelection}
+          onClick={(e) => e.stopPropagation()}
+          className="w-4 h-4 text-cyan-600 bg-gray-100 border-gray-300 rounded-full focus:ring-cyan-500 cursor-pointer"
+        />
       </div>
     </div>
   )

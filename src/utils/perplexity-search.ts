@@ -1,4 +1,5 @@
 import { decryptData } from '../services/encryption'
+import { handleApiError, logSuccess, errorLogger } from '../services/errorHandling'
 
 export interface PerplexityClient {
   search: (query: string) => Promise<{
@@ -24,34 +25,74 @@ export interface SearchResult {
   error?: string
 }
 
-// Initialize Perplexity client
+// Initialize Perplexity client with error handling
 const createPerplexityClient = (apiKey: string): PerplexityClient => {
   return {
     search: async (query: string) => {
-      const response = await fetch('https://api.perplexity.ai/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${apiKey}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          model: 'llama-3.1-sonar-small-128k-online', // Online model for web search
-          messages: [
-            {
-              role: 'user',
-              content: query
-            }
-          ],
-          stream: false
+      try {
+        const response = await fetch('https://api.perplexity.ai/chat/completions', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${apiKey}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            model: 'llama-3.1-sonar-small-128k-online', // Online model for web search
+            messages: [
+              {
+                role: 'user',
+                content: query
+              }
+            ],
+            stream: false
+          })
         })
-      })
-      
-      if (!response.ok) {
-        const error = await response.json().catch(() => ({}))
-        throw new Error(error.error?.message || `Perplexity API error: ${response.statusText}`)
+        
+        if (!response.ok) {
+          const error = await response.json().catch(() => ({}))
+          const apiError = {
+            message: error.error?.message || `Perplexity API error: ${response.statusText}`,
+            status: response.status,
+            code: error.error?.code,
+            response: error
+          }
+          
+          handleApiError(apiError, 'Perplexity')
+          throw new Error(apiError.message)
+        }
+        
+        const data = await response.json()
+        
+        // Log successful API call
+        if (data.usage) {
+          errorLogger.log({
+            message: 'Perplexity API usage',
+            severity: 'info',
+            category: 'api',
+            details: {
+              prompt_tokens: data.usage.prompt_tokens,
+              completion_tokens: data.usage.completion_tokens,
+              total_tokens: data.usage.total_tokens,
+              model: data.model
+            }
+          })
+        }
+        
+        return data
+      } catch (error) {
+        // Network errors
+        const err = error as Error
+        if (err.name === 'TypeError' && err.message?.includes('fetch')) {
+          const networkError = {
+            message: 'Network error: Unable to connect to Perplexity',
+            code: 'network_error'
+          }
+          handleApiError(networkError, 'Perplexity')
+          throw new Error('Unable to connect to Perplexity. Please check your internet connection.')
+        }
+        
+        throw error
       }
-      
-      return await response.json()
     }
   }
 }
@@ -76,10 +117,28 @@ export const searchWeb = async (query: string): Promise<SearchResult> => {
   try {
     const perplexity = getPerplexityClient()
     if (!perplexity) {
+      const error = {
+        message: 'Perplexity API key not configured',
+        code: 'missing_api_key'
+      }
+      handleApiError(error, 'Perplexity')
       throw new Error('Perplexity API key not configured. Please add your API key in Settings.')
     }
     
+    errorLogger.log({
+      message: `Starting Perplexity search: "${query}"`,
+      severity: 'info',
+      category: 'api',
+      details: { query }
+    })
+    
     const response = await perplexity.search(query)
+    
+    logSuccess('Perplexity search completed', {
+      query,
+      resultLength: response.choices[0].message.content.length,
+      sourcesCount: response.sources?.length || 0
+    })
     
     return {
       success: true,
@@ -88,6 +147,29 @@ export const searchWeb = async (query: string): Promise<SearchResult> => {
     }
   } catch (error) {
     const err = error as Error
+    
+    // Check for specific error types
+    if (err.message?.includes('401')) {
+      handleApiError({
+        message: err.message,
+        status: 401,
+        code: 'invalid_api_key'
+      }, 'Perplexity')
+    } else if (err.message?.includes('429')) {
+      handleApiError({
+        message: err.message,
+        status: 429,
+        code: 'rate_limit'
+      }, 'Perplexity')
+    } else if (err.message?.includes('fetch')) {
+      handleApiError({
+        message: err.message,
+        code: 'network_error'
+      }, 'Perplexity')
+    } else {
+      handleApiError(err, 'Perplexity')
+    }
+    
     return {
       success: false,
       error: err.message

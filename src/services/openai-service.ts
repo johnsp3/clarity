@@ -1,4 +1,5 @@
 import { decryptData } from './encryption'
+import { handleApiError, logSuccess, errorLogger } from './errorHandling'
 
 // OpenAI API Configuration
 const OPENAI_API_BASE = 'https://api.openai.com/v1'
@@ -64,16 +65,26 @@ export interface FormatDetectionResult {
 // Enhanced logging for debugging
 const log = {
   info: (message: string, data?: unknown) => {
-    console.log(`🤖 [OpenAI] ${message}`, data || '')
+    errorLogger.log({
+      message: `🤖 [OpenAI] ${message}`,
+      severity: 'info',
+      category: 'api',
+      details: data
+    })
   },
   success: (message: string, data?: unknown) => {
-    console.log(`✅ [OpenAI] ${message}`, data || '')
+    logSuccess(`✅ [OpenAI] ${message}`, data)
   },
   error: (message: string, error?: unknown) => {
-    console.error(`❌ [OpenAI] ${message}`, error || '')
+    handleApiError(error || { message }, 'OpenAI')
   },
   warn: (message: string, data?: unknown) => {
-    console.warn(`⚠️ [OpenAI] ${message}`, data || '')
+    errorLogger.log({
+      message: `⚠️ [OpenAI] ${message}`,
+      severity: 'warning',
+      category: 'api',
+      details: data
+    })
   },
   debug: (message: string, data?: unknown) => {
     console.debug(`🔍 [OpenAI] ${message}`, data || '')
@@ -139,14 +150,28 @@ async function fetchWithRetry(
       const retryAfter = response.headers.get('retry-after')
       const waitTime = retryAfter ? parseInt(retryAfter) * 1000 : 2000
       
-      log.warn(`Rate limited, retrying in ${waitTime}ms. Retries left: ${retries}`)
+      errorLogger.log({
+        message: `Rate limited by OpenAI, retrying in ${waitTime}ms`,
+        severity: 'warning',
+        category: 'api',
+        details: { retryAfter, retriesLeft: retries },
+        userMessage: `Rate limit hit. Waiting ${Math.ceil(waitTime/1000)} seconds...`,
+        action: 'Please wait while we retry'
+      })
+      
       await new Promise(resolve => setTimeout(resolve, waitTime))
       return fetchWithRetry(url, options, retries - 1)
     }
     
     // If server error, retry
     if (response.status >= 500 && retries > 0) {
-      log.warn(`Server error ${response.status}, retrying. Retries left: ${retries}`)
+      errorLogger.log({
+        message: `OpenAI server error ${response.status}, retrying`,
+        severity: 'warning',
+        category: 'api',
+        details: { status: response.status, retriesLeft: retries }
+      })
+      
       await new Promise(resolve => setTimeout(resolve, 1000))
       return fetchWithRetry(url, options, retries - 1)
     }
@@ -157,15 +182,95 @@ async function fetchWithRetry(
     
     const err = error as Error
     if (err.name === 'AbortError') {
-      throw new Error(`Request timeout - OpenAI API took too long to respond (>${REQUEST_TIMEOUT/1000}s). This might be due to high API load or network issues. Please try again.`)
+      const timeoutError = {
+        message: `Request timeout - OpenAI API took too long to respond (>${REQUEST_TIMEOUT/1000}s)`,
+        status: 408,
+        code: 'timeout'
+      }
+      handleApiError(timeoutError, 'OpenAI')
+      throw new Error(timeoutError.message)
     }
     
     if (retries > 0 && err.message?.includes('fetch')) {
-      log.warn(`Network error, retrying. Retries left: ${retries}`)
+      errorLogger.log({
+        message: 'Network error connecting to OpenAI, retrying',
+        severity: 'warning',
+        category: 'network',
+        details: { error: err.message, retriesLeft: retries }
+      })
+      
       await new Promise(resolve => setTimeout(resolve, 1000))
       return fetchWithRetry(url, options, retries - 1)
     }
     
+    throw error
+  }
+}
+
+// Make API request with enhanced error handling
+async function makeApiRequest(
+  endpoint: string,
+  body: object,
+  apiKey: string
+): Promise<any> {
+  try {
+    log.debug(`Making request to ${endpoint}`, { bodySize: JSON.stringify(body).length })
+    
+    const response = await fetchWithRetry(
+      `${OPENAI_API_BASE}${endpoint}`,
+      {
+        method: 'POST',
+        headers: createHeaders(apiKey),
+        body: JSON.stringify(body)
+      }
+    )
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}))
+      const error = {
+        message: errorData.error?.message || `API request failed: ${response.statusText}`,
+        status: response.status,
+        code: errorData.error?.code,
+        type: errorData.error?.type,
+        response: errorData
+      }
+      
+      handleApiError(error, 'OpenAI')
+      throw new Error(error.message)
+    }
+
+    const data = await response.json()
+    
+    // Log token usage for monitoring
+    if (data.usage) {
+      errorLogger.log({
+        message: 'OpenAI API usage',
+        severity: 'info',
+        category: 'api',
+        details: {
+          prompt_tokens: data.usage.prompt_tokens,
+          completion_tokens: data.usage.completion_tokens,
+          total_tokens: data.usage.total_tokens,
+          model: data.model
+        }
+      })
+    }
+    
+    return data
+  } catch (error) {
+    const err = error as Error
+    
+    // Network errors
+    if (err.name === 'TypeError' && err.message?.includes('fetch')) {
+      const networkError = {
+        message: 'Network error: Unable to connect to OpenAI',
+        code: 'network_error'
+      }
+      handleApiError(networkError, 'OpenAI')
+      throw new Error('Unable to connect to OpenAI. Please check your internet connection.')
+    }
+    
+    // Re-throw with context
     throw error
   }
 }
@@ -338,6 +443,11 @@ export async function transformText(
 ): Promise<TransformationResult> {
   const apiKey = getApiKey()
   if (!apiKey) {
+    const error = {
+      message: 'OpenAI API key not configured',
+      code: 'missing_api_key'
+    }
+    handleApiError(error, 'OpenAI')
     return {
       success: false,
       error: 'OpenAI API key not configured. Please add your API key in Settings.'
@@ -511,59 +621,49 @@ The result should be clean, well-structured plain text that is beautiful to read
     }
   }
 
-  const messages: ChatMessage[] = [
-    {
-      role: 'system',
-      content: `You are an expert text editor and writer who understands natural language commands perfectly, just like ChatGPT on the website. 
-
-${systemPrompt}
-
-CRITICAL INSTRUCTIONS:
-- If the user asks for "beautiful" formatting, create content that will look visually appealing when rendered
-- If they ask for Markdown, create Markdown that renders beautifully (not raw code they have to look at)
-- If they ask for HTML, create HTML that displays beautifully in a browser
-- If they say "don't show me raw code, show me beautiful code" - focus on the visual result, not the markup
-- Understand context: "beautiful Markdown" means Markdown that looks great when rendered
-- Always follow the user's intent, not just literal interpretation
-- Return ONLY the transformed content without explanations or introductions
-- Make it exactly what the user wants to see, not what they have to process further`
-    },
-    {
-      role: 'user',
-      content: content
-    }
-  ]
-
   try {
-    const response = await createChatCompletion(messages, GPT_4O_MODEL, {
-      temperature: 0.3,
-      max_tokens: Math.min(4000, content.length * 2 + 500)
-    })
+    const messages: ChatMessage[] = [
+      {
+        role: 'system',
+        content: systemPrompt
+      },
+      {
+        role: 'user',
+        content: content
+      }
+    ]
 
-    const transformedContent = response.choices[0]?.message?.content?.trim()
+    const data = await makeApiRequest('/chat/completions', {
+      model: GPT_4O_MODEL,
+      messages,
+      temperature: 0.7,
+      max_tokens: Math.min(content.length * 3, 4000)
+    }, apiKey)
 
+    const transformedContent = data.choices[0]?.message?.content || ''
+    
     if (!transformedContent) {
-      throw new Error('Empty response from OpenAI API')
+      throw new Error('No content returned from API')
     }
 
-    log.success(`Text transformation completed: ${transformation}`, {
-      originalLength: content.length,
-      transformedLength: transformedContent.length,
-      usage: response.usage
+    logSuccess(`Text transformation completed: ${transformation}`, {
+      inputLength: content.length,
+      outputLength: transformedContent.length,
+      tokensUsed: data.usage?.total_tokens
     })
 
     return {
       success: true,
       content: transformedContent,
-      transformation,
-      usage: response.usage
+      usage: data.usage
     }
   } catch (error) {
-    log.error(`Text transformation failed: ${transformation}`, error)
     const err = error as Error
+    log.error(`Text transformation failed: ${transformation}`, error)
+    
     return {
       success: false,
-      error: err.message || 'An unexpected error occurred during text transformation.'
+      error: err.message || 'Failed to transform text'
     }
   }
 }
